@@ -1,0 +1,627 @@
+{
+  "createdAt": "2025-06-06T13:31:45.708Z",
+  "updatedAt": "2025-06-06T13:31:45.708Z",
+  "id": "v1T1nvhm480eImn8",
+  "name": "Support | Slack /support command handler",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 403
+        }
+      },
+      "name": "Reject",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -660,
+        500
+      ],
+      "id": "27d6b0a3-a9bb-40f1-8c49-17996f07b231"
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{$json[\"action\"]}}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "info"
+            },
+            {
+              "value2": "delete",
+              "output": 1
+            }
+          ]
+        },
+        "fallbackOutput": 3
+      },
+      "name": "Read Command",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        -440,
+        300
+      ],
+      "id": "24b350ee-8eb0-4c9f-a0df-4ba5681a840d"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"text\": \"Sorry, I didn't understand your command. Try `/support info mutedjam`.\"\n}",
+        "options": {}
+      },
+      "name": "Wrong Command Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        600
+      ],
+      "id": "b2c65fc3-19a3-4807-a71e-6a3718a35097"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"body\"][\"token\"]}}",
+              "value2": "P2Ea4Bm48aYF7mUOmOg1zz2X"
+            }
+          ]
+        }
+      },
+      "name": "Valid Token?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        400
+      ],
+      "id": "e3db250f-363c-46ed-ae50-a3f80c0e8d4a"
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "action",
+              "value": "={{$json[\"body\"][\"text\"].split(\" \")[0].toLowerCase()}}"
+            },
+            {
+              "name": "target",
+              "value": "={{$json[\"body\"][\"text\"].split(\" \")[1].toLowerCase()}}"
+            },
+            {
+              "name": "url",
+              "value": "={{$json[\"body\"][\"response_url\"]}}"
+            },
+            {
+              "name": "user_id",
+              "value": "={{$json[\"body\"][\"user_id\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -660,
+        300
+      ],
+      "id": "c0170124-b848-49e1-b1ce-d9db8caf15f5"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"target\"]}}",
+              "operation": "isEmpty"
+            }
+          ]
+        }
+      },
+      "name": "Empty Info Target?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        200
+      ],
+      "id": "d3031ce7-0be9-457d-9245-c26e8a5ec2e2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"target\"]}}",
+              "operation": "isEmpty"
+            }
+          ]
+        }
+      },
+      "name": "Empty Deletion Target?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        400
+      ],
+      "id": "114cf92f-beb2-4f0c-9096-b1962272ab6e"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"text\": \"It looks like the target for your action is missing. Try `/support info mutedjam`.\"\n}",
+        "options": {}
+      },
+      "name": "Missing Info Target",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "46b50268-95d8-47b4-8177-1d0d9477a8be"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"text\": \"It looks like the target for your action is missing. Try `/support delete email@to-delete.here`.\"\n}",
+        "options": {}
+      },
+      "name": "Missing Delete Target",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        400
+      ],
+      "id": "78be9ce2-1ed6-4d9c-b273-11a5e5ba5266"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"user_id\"]}}",
+              "value2": "U0358EQ90PQ"
+            },
+            {
+              "value1": "={{$json[\"user_id\"]}}",
+              "value2": "U035F563JSW"
+            }
+          ]
+        },
+        "combineOperation": "any"
+      },
+      "name": "Authorized User",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        0,
+        600
+      ],
+      "id": "45de5ca0-75f6-400c-9916-6cea94f2d376"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"text\": \"It looks like you're not currently authorized to run this command.\"\n}",
+        "options": {}
+      },
+      "name": "User Not Authorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        220,
+        700
+      ],
+      "id": "716a8090-9de0-47a9-8017-644359b6ab45"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"blocks\": [ { \"type\": \"section\", \"text\": { \"type\": \"mrkdwn\", \"text\": \"Starting deletion process for {{$json[\"target\"]}}. This is a long-running action, please check the result in Baserow in a few minutes.\" }, \"accessory\": { \"type\": \"button\", \"text\": { \"type\": \"plain_text\", \"text\": \":baserow: GDPR Deletions\", \"emoji\": true }, \"value\": \"gdpr_flow_table\", \"url\": \"https://baserow.growth.internal.n8n.io/database/23/table/82\", \"action_id\": \"button_gdpr_flow_table\" } } ] }",
+        "options": {}
+      },
+      "name": "Acknowledge Deletion",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        220,
+        500
+      ],
+      "id": "c8a53ebf-0413-427d-91ac-e6e028f4f93f"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"text\": \"On it!\",\n  \"response_type\": \"ephemeral\",\n  \"replace_original\": true,\n  \"delete_original\": true\n}",
+        "options": {}
+      },
+      "name": "Acknowledge Info",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "id": "365be907-12ac-4ac9-9205-796239270adc"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "support",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Slash Command Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1100,
+        400
+      ],
+      "webhookId": "b44c88b9-4d84-4a1e-be7f-ff3aed8ce301",
+      "id": "f3d4e911-6278-46e5-8766-0e0cb4af59c9"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-action",
+        "options": {}
+      },
+      "name": "Interactivity Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1100,
+        600
+      ],
+      "webhookId": "ac101dfc-6580-4d23-ab91-0b8772bb16aa",
+      "id": "02de9c45-fa37-424f-8625-810f5e0de787"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "operation",
+              "value": "delete"
+            },
+            {
+              "name": "email",
+              "value": "={{$json[\"target\"]}}"
+            },
+            {
+              "name": "slack_status_url",
+              "value": "={{$node[\"Set Parameters\"].json[\"url\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Prepare Deletion",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        440,
+        500
+      ],
+      "id": "db6bcf09-22ff-4cd1-8782-4951e7ce1bea"
+    },
+    {
+      "parameters": {
+        "workflowId": "59",
+        "options": {}
+      },
+      "name": "Execute Deletion Workflow",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        660,
+        500
+      ],
+      "id": "38b0bf65-b85c-4d34-8dd4-50d444dade49",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "={{$node[\"Set Parameters\"].json[\"url\"]}}",
+        "responseFormat": "string",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "={{ JSON.stringify($json) }}"
+      },
+      "name": "Send details to slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        660,
+        200
+      ],
+      "id": "c30325bc-18db-462d-ae3a-bfb53a6c830d"
+    },
+    {
+      "parameters": {
+        "functionCode": "let fields = [];\n\nif (item['Error']) {\n  return {\n    blocks: [{\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text: item['Error']\n      }\n    }, {\n      type: 'context',\n      elements: [{\n        type: 'plain_text',\n        text: `Workflow #${$workflow.id}`\n      }]\n    }]\n  };\n} else {\n  if (item['prodDb']?.['username'] && item['prodDb']?.['user_id']) {\n    fields.push({\n      type: \"mrkdwn\",\n      text: `*User* ${item['prodDb']['username']} (ID ${item['prodDb']['user_id']})`\n    });\n  }\n\n  if (item['prodDb']?.['email']) {\n    fields.push({\n      type: \"mrkdwn\",\n      text: `*Email* ${item['prodDb']?.['email']}`\n    });\n  }\n\n  if (item['prodDb']?.['usedLimits']) {\n    fields.push({\n      type: \"mrkdwn\",\n      text: `*Executions* ${item['prodDb']['usedLimits']?.['executions']}/${item['prodDb']?.['configuration']?.['maxExecutions']}`\n    });\n    fields.push({\n      type: \"mrkdwn\",\n      text: `*Workflows* ${item['prodDb']['usedLimits']['activeWorkflows']}/${item['prodDb']?.['configuration']?.['maxActiveWorkflows']}`\n    });\n  }\n\n  if (item['prodDb']?.['configuration']?.['maxExecutionTimeout']) {\n    fields.push({\n      type: \"mrkdwn\",\n      text: `*Timeout* ${item['prodDb']['configuration']['maxExecutionTimeout']}s`\n    });\n  }\n\n  if (item['prodDb']?.['configuration']?.['version']?.['name']) {\n    fields.push({\n      type: \"mrkdwn\",\n      text: `*n8n Version* ${item['prodDb']['configuration']['version']['name']}`\n    });\n  }\n\n  /* if (item['Instance Timezone']) {\n    fields.push({\n      type: \"mrkdwn\",\n      text: `*Timezone* ${item['Instance Timezone']}`\n    });\n  } */\n\n  if (item['paddle']) {\n    fields.push({\n      type: \"mrkdwn\",\n      text: `*Subscription* ${item['paddle']['plan']['name']}`\n    });\n    fields.push({\n      type: \"mrkdwn\",\n      text: `*Subscription since* ${item['paddle']['signup_date']}`\n    })\n    fields.push({\n      type: \"mrkdwn\",\n      text: `*Last Payment* ${item['paddle']['last_payment']['currency']} ${item['paddle']['last_payment']['amount']}`\n    });\n  }\n\n  return {\n    response_type: 'ephemeral',\n    replace_original: true,\n    delete_original: true,\n    blocks: [{\n      type: 'section',\n      text: {\n        type: 'mrkdwn',\n        text: 'Here are the requested user details:'\n      }\n    }, {\n      type: 'section',\n      fields: fields\n    }, {\n      type: 'context',\n      elements: [{\n        type: 'plain_text',\n        text: `Workflow #${$workflow.id}`\n      }]\n    }]\n  };\n}\n\n"
+      },
+      "id": "14fdc97e-d707-4474-ada8-625a7fa7dc4e",
+      "name": "Build slack payload",
+      "type": "n8n-nodes-base.functionItem",
+      "typeVersion": 1,
+      "position": [
+        440,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://internal.users.n8n.cloud/webhook/8c766e67-399a-400a-a529-bd89738ea7d5",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "search",
+              "value": "={{ $json.target }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b0dc80dc-af09-4750-b579-f742ea9e7352",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        220,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Read Command": {
+      "main": [
+        [
+          {
+            "node": "Empty Info Target?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wrong Command Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        [
+          {
+            "node": "Wrong Command Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Token?": {
+      "main": [
+        [
+          {
+            "node": "Set Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Parameters": {
+      "main": [
+        [
+          {
+            "node": "Read Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Empty Info Target?": {
+      "main": [
+        [
+          {
+            "node": "Missing Info Target",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Acknowledge Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Empty Deletion Target?": {
+      "main": [
+        [
+          {
+            "node": "Missing Delete Target",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Authorized User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authorized User": {
+      "main": [
+        [
+          {
+            "node": "Acknowledge Deletion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "User Not Authorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Acknowledge Deletion": {
+      "main": [
+        [
+          {
+            "node": "Prepare Deletion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Acknowledge Info": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slash Command Webhook": {
+      "main": [
+        [
+          {
+            "node": "Valid Token?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Deletion": {
+      "main": [
+        [
+          {
+            "node": "Execute Deletion Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build slack payload": {
+      "main": [
+        [
+          {
+            "node": "Send details to slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Build slack payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "Slash Command Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "internal.users.n8n.cloud",
+            "user-agent": "Slackbot 1.0 (+https://api.slack.com/robots)",
+            "content-length": "417",
+            "accept": "application/json,*/*",
+            "accept-encoding": "gzip,deflate",
+            "content-type": "application/x-www-form-urlencoded",
+            "x-forwarded-for": "10.255.0.2",
+            "x-forwarded-host": "internal.users.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "3d9f11a36e52",
+            "x-real-ip": "10.255.0.2",
+            "x-slack-request-timestamp": "1707905338",
+            "x-slack-signature": "v0=e7f68182c15650d57e9d0d3bfaf1883568a42e2dd90835ae527467abdef8b8af"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "token": "P2Ea4Bm48aYF7mUOmOg1zz2X",
+            "team_id": "TG9695PUK",
+            "team_domain": "n8nio",
+            "channel_id": "C03592DEBEY",
+            "channel_name": "social-gamers",
+            "user_id": "U0358EQ90PQ",
+            "user_name": "thomas",
+            "command": "/support",
+            "text": "info foo",
+            "api_app_id": "A0364U6LT4Y",
+            "is_enterprise_install": "false",
+            "response_url": "https://hooks.slack.com/commands/TG9695PUK/6636999931651/NGZ7f01ZtTA8GqEDiIkq6McL",
+            "trigger_id": "6649769414801.553213193971.78132e66fe114234e93c6287cc8682d9"
+          }
+        }
+      }
+    ]
+  },
+  "versionId": "a8323576-5bd3-47df-9965-39133ccf1f7b",
+  "triggerCount": 0,
+  "tags": [
+    {
+      "createdAt": "2025-06-06T13:31:13.531Z",
+      "updatedAt": "2025-06-06T13:31:13.531Z",
+      "id": "fbWVKyIr4pGbfxDT",
+      "name": "support"
+    }
+  ]
+}
