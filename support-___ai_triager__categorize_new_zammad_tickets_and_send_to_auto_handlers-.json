@@ -1,0 +1,1315 @@
+{
+  "createdAt": "2025-06-06T14:34:15.504Z",
+  "updatedAt": "2025-06-06T14:34:30.000Z",
+  "id": "YKLcXyrx4J8jkZAp",
+  "name": "Support ___AI_Triager__Categorize_new_Zammad_Tickets_and_send_to_auto_handlers",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# Ticket Triage 🚑\n\n## It currently performs the following actions once per minute: \n\n### 1. Reading ticket categories\n- These come from our [Notion Guideline \"How to work in Zammad\"](https://www.notion.so/n8n/1a45b6e0c94f806fa030c9069fcdb478?v=1a45b6e0c94f80d08309000c5430b0fc&pvs=4)\n\n### 2. Fetching new tickets\n- Currently reading tickets created in the last hour which do not have a `triaged` tag (i.e. have not been triaged yet)\n\n### 3. Fetch oldest article for each ticket\n- This is (typically) the customer request which we're later sending to an LLM for categorizing \n\n### 4. Fetch category for each ticket\n- This is where AI comes into play\n- We're feeding the category names and description, ticket title, and article body to our LLM\n- AI returns a suitable category name\n\n### 5. Fetch organization and cloud user details\n- This is done as the subsequent logic differs depending on whether a user is an enterprise user (who would always get a human response) or a cloud user\n\n### 6. Update ticket\n- In the last step we update the category field on our ticket and also add a `triaged` tag to help identify automatically triaged tickets in the future\n- We're also logging each triaged ticket in [this Google Sheet](https://docs.google.com/spreadsheets/d/1ZRGv2hj1be--xFPuc6GDrwEn0vCPjVlZLqJycCheBkQ/edit?gid=0#gid=0)\n\n### 7. Resolve customer request\n- For supported ticket categories, the workflow also calls an additional handling workflow which will perform additional checks where necessary and attempt to resolve the request automatically  \n\nNotes:\n- We are using polling (once per minute) instead of webhooks to increase reliability. Failed webhook deliveries would go unnoticed on our end, polling new tickets will avoid this.",
+        "height": 960,
+        "width": 1220,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "5dfcd122-153b-418b-921e-a0d5cbaa771b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        40,
+        1100
+      ],
+      "id": "127b3d50-7d9a-4d88-a6f7-8f206e5a15d0",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Please identify the correct category name using the MESSAGE and TITLE of the below ticket\n\nMESSAGE: \n{{ $json.ticket_body }}\n\nTITLE:\n{{ $json.ticket_title }}",
+        "options": {
+          "systemMessage": "=You are a senior support engineer at n8n.io. Your current task is to find a category for any new tickets from the `name` column in the below CATEGORY TABLE. Return only the value from the `name` column and nothing else.\n\nCATEGORY TABLE: \n{{ $('Build category table').item.json.table }}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        2760,
+        1220
+      ],
+      "id": "0cdca842-f19e-4d39-90a3-2c1961e2111d",
+      "name": "AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "https://n8n-support.zammad.com/api/v1/tickets/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=created_at:[{{ $now.minus(24, 'days').set({ 'seconds': 0, 'milliseconds': 0 }).setZone('UTC').toISO() }} TO {{ $now.set({ 'seconds': 0, 'milliseconds': 0 }).setZone('UTC').toISO() }}] AND !tags:triaged"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "name": "page",
+                    "value": "={{ 1 + $pageCount }}"
+                  },
+                  {
+                    "name": "per_page",
+                    "value": "50"
+                  }
+                ]
+              },
+              "limitPagesFetched": true,
+              "maxRequests": 10
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        920,
+        1220
+      ],
+      "id": "66093813-773d-47b2-9ba0-72fd98956966",
+      "name": "Search tickets",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "=https://n8n-support.zammad.com/api/v1/ticket_articles/{{ $('Search tickets').item.json.article_ids.sort().first() }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        1220
+      ],
+      "id": "e63667ad-7b1d-4766-acbc-77923735232c",
+      "name": "Fetch initial article",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.body }}",
+        "destinationKey": "body",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        1960,
+        1220
+      ],
+      "id": "de9d0c44-a41d-4e6a-922f-861aedd43b3f",
+      "name": "HTML to Markdown"
+    },
+    {
+      "parameters": {
+        "url": "=https://n8n-support.zammad.com/api/v1/organizations/{{ $('Search tickets').item.json.organization_id || -1 }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3820,
+        1220
+      ],
+      "id": "8cc03319-0c94-496e-828e-0ba6ff115718",
+      "name": "Fetch organization details",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b5716064-6b14-4f0b-b0d1-f93e8afbb49c",
+              "name": "=name",
+              "value": "={{ $json.properties.name.rich_text[0].plain_text }}",
+              "type": "string"
+            },
+            {
+              "id": "cdbe4278-ea15-4165-ac20-fd384d443686",
+              "name": "=description",
+              "value": "={{ $json.properties.Description.rich_text[0].text.content.replaceAll('\\n', '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        1220
+      ],
+      "id": "c6028298-8182-4858-b3ca-949449c87041",
+      "name": "Clean category data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6af4f154-0d38-4d83-bf42-6f0592905e11",
+              "leftValue": "={{ $json.article_ids.length }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1140,
+        1220
+      ],
+      "id": "b271b420-26ed-47ff-9c12-3f78c25a04d4",
+      "name": "Has at least one article"
+    },
+    {
+      "parameters": {
+        "url": "https://internal.users.n8n.cloud/webhook/8c766e67-399a-400a-a529-bd89738ea7d5",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "search",
+              "value": "={{ $json.ticket_created_by }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8fb3b993-0b6a-4fc5-90d4-02584cc07c71",
+      "name": "Fetch user details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        4480,
+        1220
+      ],
+      "alwaysOutputData": true,
+      "notesInFlow": true,
+      "retryOnFail": true,
+      "notes": "Calls Support | Fetch pro user details"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "92d2af32-58a2-4309-8014-156669304f74",
+              "name": "processed_at",
+              "value": "={{ $now.toUTC().toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "5e93b162-9835-46c0-89d1-c810238a913f",
+              "name": "ticket_id",
+              "value": "={{ $('Search tickets').item.json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "a60e6daa-b354-4dc3-8b3c-ba4df9f989d2",
+              "name": "ticket_title",
+              "value": "={{ $('Search tickets').item.json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "68d15090-cdaa-40a9-a4d0-349809ac5c7f",
+              "name": "ticket_body",
+              "value": "={{ $json.body }}",
+              "type": "string"
+            },
+            {
+              "id": "6ffa4658-3f41-4f15-8f81-91f398857316",
+              "name": "ticket_created_by",
+              "value": "={{ $json.origin_by || $json.created_by }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2540,
+        1220
+      ],
+      "id": "2ff2e163-6927-4046-95ac-d0da4fb83c40",
+      "name": "Prepare ticket details"
+    },
+    {
+      "parameters": {
+        "jsCode": "const header = `| name | description |\n| --- | --- |\n`;\n\nconst table_content = $input.all()\n  .map((item) => {\n    return `| ${item.json.name} | ${item.json.description} |`;\n  }).join(\"\\n\");\n\nreturn [{\n  json: {\n    table: header + table_content\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        1220
+      ],
+      "id": "420a8004-c283-4d32-87fc-a9b58ce51854",
+      "name": "Build category table"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "1a45b6e0c94f806fa030c9069fcdb478",
+          "mode": "id"
+        },
+        "returnAll": true,
+        "simple": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        260,
+        1220
+      ],
+      "id": "9431b136-091f-4ce9-b8f0-7b43c9ab2e28",
+      "name": "Read category db",
+      "executeOnce": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ Object.assign($('Prepare ticket details').item.json, {\"ticket_category\": $json.output}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3600,
+        1220
+      ],
+      "id": "d6a5f9d5-100a-4c6d-a28a-c08b6a2d2e7d",
+      "name": "Merge ticket details + category"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ Object.assign($('Merge ticket details + category').item.json, {\n  \"organization_id\": $json.body?.id || null,\n  \"organization_name\": $json.body?.name || null,\n  \"organization_license_type\": $json.body?.license_type || null,\n  \"organization_support_plan\": $json.body?.support_plan || null\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4040,
+        1220
+      ],
+      "id": "25a0c1c9-84a8-456a-ae57-968ae133a01e",
+      "name": "Format org details"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAzureOpenAi",
+      "typeVersion": 1,
+      "position": [
+        2860,
+        1440
+      ],
+      "id": "61aa7119-ed58-4c94-9b5f-b4818269d873",
+      "name": "gpt-4o-mini"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        4260,
+        1220
+      ],
+      "id": "1a1c96ee-7d3c-4911-a219-e7ac17f82c8e",
+      "name": "Loop through results"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ Object.assign($('Loop through results').item.json, {\n  \"paddle_subscription_id\": $json.paddle?.subscription_id || null,\n  \"paddle_plan\": $json.paddle?.plan?.name || null,\n  \"cloud_username\": $json.prodDb?.username || null,\n  \"cloud_trial_extended\": ($json.prodDb?.account_created_at && $json.prodDb?.instance_created_at ? DateTime.fromISO($json.prodDb?.account_created_at) > DateTime.fromISO($json.prodDb?.instance_created_at) : null)\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4700,
+        1280
+      ],
+      "id": "10467f73-692a-49e1-89d3-7e63e4330e7c",
+      "name": "Format cloud user details"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        4480,
+        920
+      ],
+      "id": "35ac582f-3813-44d2-8a43-5a96448bd2b3",
+      "name": "Final dataset"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ZRGv2hj1be--xFPuc6GDrwEn0vCPjVlZLqJycCheBkQ",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Tickets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ZRGv2hj1be--xFPuc6GDrwEn0vCPjVlZLqJycCheBkQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "processed_at",
+              "displayName": "processed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ticket_title",
+              "displayName": "ticket_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ticket_body",
+              "displayName": "ticket_body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ticket_created_by",
+              "displayName": "ticket_created_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ticket_category",
+              "displayName": "ticket_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "organization_id",
+              "displayName": "organization_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "organization_name",
+              "displayName": "organization_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "organization_license_type",
+              "displayName": "organization_license_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "organization_support_plan",
+              "displayName": "organization_support_plan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "paddle_subscription_id",
+              "displayName": "paddle_subscription_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "paddle_plan",
+              "displayName": "paddle_plan",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cloud_username",
+              "displayName": "cloud_username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cloud_trial_extended",
+              "displayName": "cloud_trial_extended",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        4700,
+        1020
+      ],
+      "id": "ccd94adc-125e-4488-a6d7-b2d818ad071e",
+      "name": "Log result",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://support.n8n.io/api/v1/tickets/{{ $json.ticket_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"category\": \"{{ $json.ticket_category }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4700,
+        820
+      ],
+      "id": "2b28b628-c206-4092-9a07-5f9a969a50c5",
+      "name": "Set category in new tickets"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://support.n8n.io/api/v1/tags/add",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"item\": \"triaged\",\n    \"object\": \"Ticket\",\n    \"o_id\": {{ $json.id}}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4920,
+        820
+      ],
+      "id": "ad57d3dd-ddb7-4749-8767-32b19bc960cf",
+      "name": "Add `triaged` tag"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        40,
+        1300
+      ],
+      "id": "85359051-f22c-4e51-a25a-f5a4e2944b2f",
+      "name": "Every hour"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "09434ab2-9a6b-4fee-8ad8-84e34a2788d6",
+              "leftValue": "={{ $('Clean category data').all().map(e => e.json.name) }}",
+              "rightValue": "={{ $json.output }}",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        3140,
+        1220
+      ],
+      "id": "a737aa90-2f69-4345-b65d-16c307176859",
+      "name": "Keep only valid categories"
+    },
+    {
+      "parameters": {
+        "content": "# Why is this filter here?\n\nTo prevent \"hallucinated\" values from being sent to Zammad, this filter node ensures the AI Agent has returned an existing string from our Notion category database.\n\nItems not passing this in the current run will be re-processed on the next run.",
+        "height": 380,
+        "width": 440
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3080,
+        1000
+      ],
+      "typeVersion": 1,
+      "id": "be3cc34f-80fc-4be8-b8d5-9c71cc154fdb",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "#  Why is this filter here?\n\nThe workflow is based on the first article in a ticket (= the initial customer request). This first article exists even in cases where customers send just a subject line and no ticket body.\n\nThis filter node ensures tickets are in a valid state before being processed. Tickets not passing this test will be re-processed in the next workflow execution for 24 hours.\n\n",
+        "height": 380,
+        "width": 600
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1120,
+        1000
+      ],
+      "typeVersion": 1,
+      "id": "ae439c33-e181-4edf-bad6-27835e528cc1",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# Why the HTML to Markdown conversion?\n\nHTML tags are not required for an LLM (or a human) to understand the customer's request. By converting HTML to Markdown, we remove the tags, saving a few tokens and making it easier to read the logs. Plain text bodies will simply be passed on as they are.",
+        "height": 380,
+        "width": 580
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1940,
+        1000
+      ],
+      "typeVersion": 1,
+      "id": "b2bd330b-083e-4147-8670-cc38ee741322",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "account_extendtrial",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "4656e42c-e85f-4088-9e19-7949ef7f98d7"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "account_extendtrial"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d69446d0-ba2e-4fe9-ac7b-f15c9c152b3d",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "forward_marketing",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "forward_marketing"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a422e66b-8056-46d6-90d4-db47f20ccb52",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "forward_sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "forward_sales"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        5360,
+        820
+      ],
+      "id": "6816b58e-2da6-43ee-9f90-5d753d98ae10",
+      "name": "Resolution path"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a3f2b06f-e936-4ac8-b216-880f2899937e",
+              "name": "ticket_id",
+              "value": "={{ $('Set category in new tickets').item.json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "786fc5df-7086-48fe-b1a7-d771673f9e93",
+              "name": "category",
+              "value": "={{ $('Set category in new tickets').item.json.category }}",
+              "type": "string"
+            },
+            {
+              "id": "38d2b5bb-6595-43a3-9090-c832261ffb4c",
+              "name": "cloud_username",
+              "value": "={{ $('Final dataset').item.json.cloud_username }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5140,
+        820
+      ],
+      "id": "8f881d2f-97c5-49e5-8ad2-4659e499f063",
+      "name": "Retrieve ticket details"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "UcMFofVAKioOKuid",
+          "mode": "list",
+          "cachedResultName": "Support — [WIP] 🤖 AI-Agent: Extend trial"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticket_id": "={{ $json.ticket_id }}",
+            "cloud_username": "={{ $json.cloud_username }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "cloud_username",
+              "displayName": "cloud_username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        5860,
+        560
+      ],
+      "id": "eee9dd67-685d-4746-9699-3b1359d831de",
+      "name": "account_extendtrial"
+    },
+    {
+      "parameters": {
+        "content": "## Ticket First Pass with AI",
+        "height": 820,
+        "width": 1060,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5080,
+        520
+      ],
+      "id": "7384a30c-0535-4b7f-a424-027a56b4b9bf",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ghtSaEHNFJmfYvxT",
+          "mode": "list",
+          "cachedResultName": "Support — 🤖 AI-Agent: Marketing"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticket_id": "={{ $json.ticket_id }}"
+          },
+          "matchingColumns": [
+            "ticket_id"
+          ],
+          "schema": [
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        5860,
+        720
+      ],
+      "id": "ab7937b0-df0b-42df-9f03-e73f64de764d",
+      "name": "forward_marketing"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "HQjyKcyHakkP31cC",
+          "mode": "list",
+          "cachedResultName": "Support — 🤖 AI-Agent: Sales"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticket_id": "={{ $json.ticket_id }}"
+          },
+          "matchingColumns": [
+            "ticket_id"
+          ],
+          "schema": [
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        5860,
+        900
+      ],
+      "id": "aef449a4-8fe1-4f31-82a3-ce060c5fae41",
+      "name": "forward_sales"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read category db",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search tickets": {
+      "main": [
+        [
+          {
+            "node": "Has at least one article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch initial article": {
+      "main": [
+        [
+          {
+            "node": "HTML to Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML to Markdown": {
+      "main": [
+        [
+          {
+            "node": "Prepare ticket details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Keep only valid categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch organization details": {
+      "main": [
+        [
+          {
+            "node": "Format org details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean category data": {
+      "main": [
+        [
+          {
+            "node": "Build category table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has at least one article": {
+      "main": [
+        [
+          {
+            "node": "Fetch initial article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch user details": {
+      "main": [
+        [
+          {
+            "node": "Format cloud user details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare ticket details": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build category table": {
+      "main": [
+        [
+          {
+            "node": "Search tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read category db": {
+      "main": [
+        [
+          {
+            "node": "Clean category data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge ticket details + category": {
+      "main": [
+        [
+          {
+            "node": "Fetch organization details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format org details": {
+      "main": [
+        [
+          {
+            "node": "Loop through results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gpt-4o-mini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop through results": {
+      "main": [
+        [
+          {
+            "node": "Final dataset",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch user details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format cloud user details": {
+      "main": [
+        [
+          {
+            "node": "Loop through results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final dataset": {
+      "main": [
+        [
+          {
+            "node": "Log result",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set category in new tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set category in new tickets": {
+      "main": [
+        [
+          {
+            "node": "Add `triaged` tag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "Read category db",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep only valid categories": {
+      "main": [
+        [
+          {
+            "node": "Merge ticket details + category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add `triaged` tag": {
+      "main": [
+        [
+          {
+            "node": "Retrieve ticket details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolution path": {
+      "main": [
+        [
+          {
+            "node": "account_extendtrial",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "forward_marketing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "forward_sales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve ticket details": {
+      "main": [
+        [
+          {
+            "node": "Resolution path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "Every hour": [
+      {
+        "json": {
+          "timestamp": "2025-05-22T14:00:00.036+02:00",
+          "Readable date": "May 22nd 2025, 2:00:00 pm",
+          "Readable time": "2:00:00 pm",
+          "Day of week": "Thursday",
+          "Year": "2025",
+          "Month": "May",
+          "Day of month": "22",
+          "Hour": "14",
+          "Minute": "00",
+          "Second": "00",
+          "Timezone": "Europe/Berlin (UTC+02:00)"
+        }
+      }
+    ]
+  },
+  "versionId": "df4467f0-a668-440b-9764-71144b5e05de",
+  "triggerCount": 0,
+  "tags": []
+}
