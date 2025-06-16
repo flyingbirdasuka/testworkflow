@@ -1,0 +1,1152 @@
+{
+  "createdAt": "2025-06-06T14:22:36.578Z",
+  "updatedAt": "2025-06-06T14:22:41.000Z",
+  "id": "4LAjH1fw1mdwdEii",
+  "name": "Support Support___Hibob_Zammad_Absence_sync_v2",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# Absence sync\n\nThis is a replacement for the old absence sync logic at https://internal.users.n8n.cloud/workflow/NlnCi7XTPYLkcCNW",
+        "height": 200,
+        "width": 480,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -740,
+        20
+      ],
+      "typeVersion": 1,
+      "id": "3f195368-1ac5-4d28-a2d0-bb09ebae2bef",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "url": "https://n8n-support.zammad.com/api/v1/users/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "role_ids:6"
+            }
+          ]
+        },
+        "options": {
+          "pagination": {
+            "pagination": {
+              "parameters": {
+                "parameters": [
+                  {
+                    "name": "page",
+                    "value": "={{ 1 + $pageCount }}"
+                  },
+                  {
+                    "name": "per_page",
+                    "value": "50"
+                  }
+                ]
+              },
+              "limitPagesFetched": true,
+              "maxRequests": 10
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -20,
+        400
+      ],
+      "id": "78112341-bb61-420b-bfff-16b54124125e",
+      "name": "Zammad: Fetch agents",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "content": "# Fetch agents from Zammad\n\n-  [Searchable attributes](https://docs.zammad.org/en/latest/install/elasticsearch/indexed-attributes.html#user)\n- [User roles](https://docs.zammad.org/en/latest/api/role.html#list) (1 = Admin, 2 = Agent, ...)",
+        "height": 360,
+        "width": 300
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -120,
+        180
+      ],
+      "typeVersion": 1,
+      "id": "df227124-c911-4142-82eb-5b4614d47b10",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "26a9fdb4-ad5a-4872-b73b-41b75c3ae1a0",
+              "name": "zammad_id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "6f65e6c2-6143-4935-b983-466c09425503",
+              "name": "zammad_login",
+              "value": "={{ $json.login }}",
+              "type": "string"
+            },
+            {
+              "id": "61ee53d1-44bb-4b09-9afc-26c894992173",
+              "name": "zammad_name ",
+              "value": "={{ $json.firstname }} {{ $json.lastname }}",
+              "type": "string"
+            },
+            {
+              "id": "6095d32f-efe7-4d22-a388-140fcd0d08f4",
+              "name": "zammad_timezone",
+              "value": "={{ $json.timezone }}",
+              "type": "string"
+            },
+            {
+              "id": "5aee722c-7277-446b-ab20-6cb95c85b902",
+              "name": "zammad_current_out_of_office",
+              "value": "={{ $json.out_of_office }}",
+              "type": "boolean"
+            },
+            {
+              "id": "bbcaae8d-2372-427a-a28c-fce3b10d7783",
+              "name": "zammad_current_out_of_office_start",
+              "value": "={{ $json.out_of_office_start_at }}",
+              "type": "string"
+            },
+            {
+              "id": "8e7e3419-b01b-4afe-b440-e077f0d9b77e",
+              "name": "zammad_current_out_of_office_end",
+              "value": "={{ $json.out_of_office_end_at }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        400
+      ],
+      "id": "b24e553b-9615-4222-9249-d60bb29a52bb",
+      "name": "Format Zammad results"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://support.n8n.io/api/v1/users/{{ $json.zammad_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"out_of_office\": false,\n  \"out_of_office_start_at\": null,\n  \"out_of_office_end_at\": null\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        600
+      ],
+      "id": "b4a4934c-453d-4ba3-82fe-0e8d28460556",
+      "name": "Zammad: Set out_of_office to false",
+      "notesInFlow": false,
+      "notes": "supportlings = roleid:6 and not ID 15 (accounts@n8n.io)"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://support.n8n.io/api/v1/users/{{ $json.zammad_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"out_of_office\": true,\n  \"out_of_office_start_at\": $json.start,\n  \"out_of_office_end_at\": $json.end,\n  \"out_of_office_replacement_id\": \"6789\"\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        400
+      ],
+      "id": "e65f672e-75fd-4a59-987d-cc9793611491",
+      "name": "Zammad: Set out_of_office to true",
+      "notesInFlow": false,
+      "notes": "supportlings = roleid:6 and not ID 15 (accounts@n8n.io)"
+    },
+    {
+      "parameters": {
+        "url": "https://support.n8n.io/api/v1/tickets/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=owner_id:{{ $json.zammad_id }} AND state.name:new"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1960,
+        400
+      ],
+      "id": "8d45d3fc-d96b-4691-b3e8-6958d01cb39a",
+      "name": "Zammad: Fetch new tickets for agent",
+      "notesInFlow": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://support.n8n.io/api/v1/tickets/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "owner_id",
+              "value": "={{ null }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        400
+      ],
+      "id": "0771fa2a-23ea-49c8-8119-e6ca9fe74388",
+      "name": "Zammad: Unassign new tickets",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pUSHpkHuWDVJGYO6",
+          "mode": "list",
+          "cachedResultName": "Support — Support | Fetch absences for date"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $evaluateExpression( $('Set today').first().json.expression ) }}"
+          },
+          "matchingColumns": [
+            "date"
+          ],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        600
+      ],
+      "id": "a045cd2f-37c5-4f02-a0b3-29bbb30f39f1",
+      "name": "Fetch absences for today"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "22c9203d-3b8f-4f2a-964f-4e0ce18f4a1d",
+              "name": "expression",
+              "value": "{{ $today.toFormat('yyyy-MM-dd') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        600
+      ],
+      "id": "8487739e-cb85-44d4-a8eb-9c08f29de70d",
+      "name": "Set today"
+    },
+    {
+      "parameters": {
+        "content": "# Date testing\n\nIn this node, set any expression that will later be evaluated as our \"today\" string through the use of [$evaluateExpression](https://docs.n8n.io/code/builtin/convenience/). In production, this will typically be `{{ $today.toFormat('yyyy-MM-dd') }}`. For testing purposes, any other day can be specified using `{{ DateTime.fromISO('2025-05-26').toFormat('yyyy-MM-dd') }}`.",
+        "height": 420,
+        "width": 340
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -600,
+        320
+      ],
+      "typeVersion": 1,
+      "id": "cd1046e1-e923-4814-88c4-6944f8fa38b1",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "zammad_login",
+              "field2": "hibob_employee_email"
+            }
+          ]
+        },
+        "joinMode": "enrichInput2",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        420,
+        400
+      ],
+      "id": "e0fab863-7898-4fd9-852d-1ed6baa42140",
+      "name": "Absences"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "zammad_login",
+              "field2": "hibob_employee_email"
+            }
+          ]
+        },
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        420,
+        600
+      ],
+      "id": "ea0275d9-0922-4694-ac9c-62d296ecfc56",
+      "name": "Agents without absence"
+    },
+    {
+      "parameters": {
+        "content": "# Date comparisons\n\nThis switch node uses rather lengthy expressions to evaluate partial absences. Hibob does not assign a time to them, but an additional morning/afternoon property. The expressions used here take these properties into consideration to determine whether an absence is \"active\" or not. Comments have been added to each line to explain their purpose.\n\nEditing is easiest in a separate code editor (such as VS Code).",
+        "height": 680,
+        "width": 300
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        540,
+        -140
+      ],
+      "typeVersion": 1,
+      "id": "0cbb2320-ec30-4f41-94b4-ccbc069e9204",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{\n  (\n    $json.start == DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).format('yyyy-MM-dd') // Absence start is today\n    && $json.start_portion == 'morning' // AND absence start is in the morning\n    && $now.setZone($json.zammad_timezone || 'Etc/UTC') < DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).set({ hours: 12}) // AND currently morning\n  ) || ( // OR\n    $json.end == DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).format('yyyy-MM-dd') // Absence end is today\n    && $json.end_portion == 'morning' // AND absence end is in the morning\n    && $now.setZone($json.zammad_timezone || 'Etc/UTC') < DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).set({ hours: 12}) // AND currently morning\n  )\n}}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "292c6995-d974-4ecf-bf5f-84c5eec982f3"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Morning absence today/now < noon"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "11e159c2-986e-4b3e-9c47-dfeef530f9ba",
+                    "leftValue": "={{\n(\n    $json.start == DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).format('yyyy-MM-dd') // Absence start is today\n    && $json.start_portion == 'morning' // AND absence start is in the morning\n    && $now.setZone($json.zammad_timezone || 'Etc/UTC') >= DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).set({ hours: 12}) // AND currently afternoon\n) || ( // OR\n    $json.end == DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).format('yyyy-MM-dd') // Absence end is today\n    && $json.end_portion == 'morning' // AND absence end is in the morning\n    && $now.setZone($json.zammad_timezone || 'Etc/UTC') >= DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).set({ hours: 12}) // AND currently afternoon\n)\n}}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Morning absence today/now >= noon"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "358d573b-8664-4c56-87b3-993e337fc7e2",
+                    "leftValue": "={{\n(\n    $json.start == DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).format('yyyy-MM-dd') // Absence start is today\n    && $json.start_portionportion == 'afternoon' // AND absence start is in the afternoon\n    && $now.setZone($json.zammad_timezone || 'Etc/UTC') < DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).set({ hours: 12}) // AND currently morning\n) || ( // OR\n    $json.end == DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).format('yyyy-MM-dd') // Absence end is today\n    && $json.end_portion == 'afternoon' // AND absence end is in the afternoon\n    && $now.setZone($json.zammad_timezone || 'Etc/UTC') < DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).set({ hours: 12}) // AND currently morning\n)\n}}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Afternoon absence today/now < noon"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "360b5e2f-dd88-4a1e-89c7-bfd89458bc75",
+                    "leftValue": "={{\n(\n    $json.start == DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).format('yyyy-MM-dd') // Absence start is today\n    && $json.start_portion == 'afternoon' // AND absence start is in the afternoon\n    && $now.setZone($json.zammad_timezone || 'Etc/UTC') >= DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).set({ hours: 12}) // AND currently afternoon\n) || ( // OR\n    $json.end == DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).format('yyyy-MM-dd') // Absence end is today\n    && $json.end_portion == 'afternoon' // AND absence end is in the afternoon\n    && $now.setZone($json.zammad_timezone || 'Etc/UTC') >= DateTime.fromISO($evaluateExpression( $('Set today').first().json.expression), { zone: $json.zammad_timezone || 'Etc/UTC' }).set({ hours: 12}) // AND currently afternoon\n)\n}}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Afternoon absence today/now >= noon"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7bc40f8f-0726-4ed0-9c95-1dee62eed75a",
+                    "leftValue": false,
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Other absence"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 4
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        640,
+        280
+      ],
+      "id": "39e4be78-5273-4105-bcae-d144f7e52fa9",
+      "name": "Identify all_day/morning/afternoon absences"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        860,
+        600
+      ],
+      "id": "8f36f049-97eb-452c-bdaf-ab1db2afaa3b",
+      "name": "Available agents"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        860,
+        400
+      ],
+      "id": "96c4ba0b-41b0-4f4f-a1b2-6da47cbd7f20",
+      "name": "Current absences"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ $('Process max. one absence per employee').item.json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1520,
+        400
+      ],
+      "id": "fed3c6a4-5fcc-4f07-80b2-6f59fcc3055a",
+      "name": "Retrieve original absence data"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "zammad_id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        400
+      ],
+      "id": "d10c6fcf-92cd-4b42-8878-b6910c000d96",
+      "name": "Process max. one absence per employee"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{\nObject.assign(\n  $('Loop over agents').item.json,\n  {\n    ticket_count: $input.all().filter(e => e?.json?.id).length,\n    ticket_numbers: $input.all().map(e => e.json.number)\n  }\n)\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2620,
+        500
+      ],
+      "id": "d6a1dd47-2b48-4d2f-a824-42619e498881",
+      "name": "Prepare result",
+      "executeOnce": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1960,
+        200
+      ],
+      "id": "5d24720e-c4b5-479a-b2a8-b18f789b14c2",
+      "name": "Finished unassigning tickets"
+    },
+    {
+      "parameters": {
+        "jsCode": "let header_blocks = [\n\t{\n\t\t\"type\": \"header\",\n\t\t\"text\": {\n\t\t\t\"type\": \"plain_text\",\n\t\t\t\"text\": \"📤 Out-of-Office Update\",\n\t\t\t\"emoji\": true\n\t\t}\n\t},\n\t{\n\t\t\"type\": \"section\",\n\t\t\"text\": {\n\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\"text\": \"The following support agents are currently *out of office*. Their tickets have been *unassigned* and are ready for reassignment. Please review below:\"\n\t\t}\n\t},\n\t{\n\t\t\"type\": \"divider\"\n\t}\n];\n\nlet content_blocks = [];\n\n\nfor (const item of $input.all()) {\n\tcontent_blocks.push({\n\t\t\"type\": \"section\",\n\t\t\"fields\": [\n\t\t\t{\n\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\"text\": `*👤 Agent:* ${item.json.display_name}`\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"type\": \"mrkdwn\",\n\t\t\t\t\"text\": `*🎟️ Unassigned Tickets:* <https://support.n8n.io/#search/${encodeURIComponent('number:(' + item.json.ticket_numbers.join(' OR ') + ')')}|${item.json.ticket_count}>`\n\t\t\t}\n\t\t]\n\t});\n}\n\nreturn [{\n  json: {\n    blocks: [].concat(header_blocks, content_blocks)\n  }\n}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        200
+      ],
+      "id": "67e998ea-f167-46b0-9156-67a99b54c9a9",
+      "name": "Prepare Slack message"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a6bffccf-9e83-45bf-963f-b45138487fef",
+              "leftValue": "={{ $json.zammad_current_out_of_office }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1080,
+        600
+      ],
+      "id": "cda9a97e-fd9f-42e6-b24c-a911417347ed",
+      "name": "OOO status update required"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "blocks",
+              "value": "={{ JSON.stringify($json.blocks) }}"
+            },
+            {
+              "name": "=text",
+              "value": "Support tickets were unassigned"
+            },
+            {
+              "name": "link_names",
+              "value": "false"
+            },
+            {
+              "name": "channel",
+              "value": "C0358FN3KP0"
+            },
+            {
+              "name": "icon_emoji",
+              "value": "gear"
+            },
+            {
+              "name": "username",
+              "value": "Support Notification"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2620,
+        200
+      ],
+      "id": "4948402c-4bd7-46a0-9002-a34f6f35f6b5",
+      "name": "Post Slack notification"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c3e6e52c-a990-4914-b1e0-cfdf1d865886",
+              "leftValue": "={{ $json.ticket_count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        2180,
+        200
+      ],
+      "id": "a0419d76-6657-4730-8dcf-48d8f242ea22",
+      "name": "Keep only agents with unassigned tickets"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/5 * * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -720,
+        600
+      ],
+      "id": "90417dd9-e636-4838-8624-098f42f4f5b1",
+      "name": "Every 5 minutes",
+      "notesInFlow": true,
+      "notes": "Th"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "556b3b58-7f94-44ff-bea2-65698729f5fe",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2180,
+        500
+      ],
+      "id": "cca72789-7358-42a8-a9bb-1c23e6e5ef5e",
+      "name": "Ticket found?"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1740,
+        400
+      ],
+      "id": "b6459f3e-490e-4876-8366-77b323034433",
+      "name": "Loop over agents"
+    },
+    {
+      "parameters": {
+        "dataToSave": {
+          "values": [
+            {
+              "key": "slack_message_sent",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executionData",
+      "typeVersion": 1,
+      "position": [
+        2840,
+        200
+      ],
+      "id": "80032f0a-f2a4-42ae-918b-736f7d4cde37",
+      "name": "Execution Data"
+    }
+  ],
+  "connections": {
+    "Zammad: Fetch agents": {
+      "main": [
+        [
+          {
+            "node": "Format Zammad results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Zammad results": {
+      "main": [
+        [
+          {
+            "node": "Absences",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Agents without absence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zammad: Set out_of_office to true": {
+      "main": [
+        [
+          {
+            "node": "Retrieve original absence data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zammad: Fetch new tickets for agent": {
+      "main": [
+        [
+          {
+            "node": "Ticket found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zammad: Unassign new tickets": {
+      "main": [
+        [
+          {
+            "node": "Prepare result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set today": {
+      "main": [
+        [
+          {
+            "node": "Fetch absences for today",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Zammad: Fetch agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch absences for today": {
+      "main": [
+        [
+          {
+            "node": "Absences",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Agents without absence",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Absences": {
+      "main": [
+        [
+          {
+            "node": "Identify all_day/morning/afternoon absences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agents without absence": {
+      "main": [
+        [
+          {
+            "node": "Available agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identify all_day/morning/afternoon absences": {
+      "main": [
+        [
+          {
+            "node": "Current absences",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Available agents",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Available agents",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Current absences",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Current absences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Available agents": {
+      "main": [
+        [
+          {
+            "node": "OOO status update required",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Current absences": {
+      "main": [
+        [
+          {
+            "node": "Process max. one absence per employee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve original absence data": {
+      "main": [
+        [
+          {
+            "node": "Loop over agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process max. one absence per employee": {
+      "main": [
+        [
+          {
+            "node": "Zammad: Set out_of_office to true",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare result": {
+      "main": [
+        [
+          {
+            "node": "Loop over agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finished unassigning tickets": {
+      "main": [
+        [
+          {
+            "node": "Keep only agents with unassigned tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OOO status update required": {
+      "main": [
+        [
+          {
+            "node": "Zammad: Set out_of_office to false",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Slack message": {
+      "main": [
+        [
+          {
+            "node": "Post Slack notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep only agents with unassigned tickets": {
+      "main": [
+        [
+          {
+            "node": "Prepare Slack message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Set today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ticket found?": {
+      "main": [
+        [
+          {
+            "node": "Zammad: Unassign new tickets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop over agents": {
+      "main": [
+        [
+          {
+            "node": "Finished unassigning tickets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Zammad: Fetch new tickets for agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Slack notification": {
+      "main": [
+        [
+          {
+            "node": "Execution Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "3ce434f1-21c5-42af-8e43-fe28cd4c9629",
+  "triggerCount": 0,
+  "tags": []
+}
