@@ -1,0 +1,1138 @@
+{
+  "createdAt": "2025-06-06T14:20:30.583Z",
+  "updatedAt": "2025-06-06T14:20:53.000Z",
+  "id": "n2W5WuhJHAxnmzTg",
+  "name": "Support cloudbot notify user",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "6318caf7-7ddc-4286-9c96-e4a6d6d923ad",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -2020,
+        420
+      ],
+      "id": "0aa9fa4d-d8af-41c6-a5cd-a8fc52186799",
+      "name": "Webhook",
+      "webhookId": "6318caf7-7ddc-4286-9c96-e4a6d6d923ad"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2b99e330-6f73-400f-b676-e023354252de",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1540,
+        1780
+      ],
+      "id": "1ee1fcb8-2c03-4432-a7fc-a0d64c6d0660",
+      "name": "If user exists",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {
+          "query": "email:niklas@n8n.io"
+        }
+      },
+      "type": "n8n-nodes-base.zammad",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        1780
+      ],
+      "id": "718696f9-c6fc-4945-b8dd-d1dfdae6effe",
+      "name": "Get User",
+      "alwaysOutputData": true,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "firstname": "={{ $('Webhook').item.json.email.split(\" \")[0] }}",
+        "lastname": "={{ $('Webhook').item.json.email.split(\" \")[0] }}",
+        "additionalFields": {
+          "email": "={{ $('Webhook').item.json.email }}"
+        }
+      },
+      "type": "n8n-nodes-base.zammad",
+      "typeVersion": 1,
+      "position": [
+        -1320,
+        1880
+      ],
+      "id": "0808795d-60fe-4d2d-843b-15f7dad122a0",
+      "name": "Create User",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "10ec69ca-b5d7-4fdd-9288-7da868a85dcd",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "e224e011-a2bb-4b5a-a28b-f5c926b9f79c",
+              "name": "email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1320,
+        1680
+      ],
+      "id": "91fa2a0d-7dcd-4d5b-b5a8-458118fd8712",
+      "name": "Get First User",
+      "executeOnce": true,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "ticket",
+        "operation": "get",
+        "id": "11778"
+      },
+      "type": "n8n-nodes-base.zammad",
+      "typeVersion": 1,
+      "position": [
+        -1080,
+        1780
+      ],
+      "id": "ff726931-7254-400d-a55b-3bc969e23b9a",
+      "name": "Create Ticket",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Webhook').item.json.body.params[1] }}",
+                    "rightValue": "deactivated-wfs",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d5fbc3d9-a7bd-41d4-a821-38d9e7aad781"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Crashlooping WF"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5ca77d33-8f54-4b19-914f-38f2fc6a1c03",
+                    "leftValue": "={{ $('Webhook').item.json.body.params[1] }}",
+                    "rightValue": "clean-execs",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Data Pruning"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1280,
+        420
+      ],
+      "id": "c574719b-77c6-46e5-8c93-1b8821ed58b4",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "⚠️ We had to deactivate a workflow to keep your instance alive",
+        "emailType": "text",
+        "message": "=Hey {{ $json.name.split(\" \")[0] }},\n\nThis is Ria from the n8n Cloud support team.\n\nI am contacting you because our engineering team has noticed repeated unscheduled restarts of your n8n cloud instance. After reviewing the available logs around these restarts, it appears that your instance has experienced a number of out-of-memory issues.\n\nTo allow your instance to restart and prevent it from crashing again, the team has disabled the active workflows with the {{ $('Webhook').item.json.body.params[2].split(\",\").length > 1 ? 'IDs' : ID }} \"{{ $('Webhook').item.json.body.params[2] }}\" on your n8n Cloud instance.\n\nFirstly, I'd like to apologise for the inconvenience this is causing. I do not have direct access to your workflows, so I cannot confirm what exactly is causing the out-of-memory situation in your case. You may want to take a look at our documentation on memory related errors, which lists a number of possible causes and approaches to avoid them - https://docs.n8n.io/manage-cloud/cloud-data-management/\n\nI hope this has provided some clarification as to what has happened here. Please accept my sincere apologies for any inconvenience this may cause and please let me know if you have any further questions on the above.\n\nBest\nRia",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -820,
+        1760
+      ],
+      "id": "84f760b1-708c-4bc2-a1f4-4e7d715015cd",
+      "name": "Crashlooping WF",
+      "webhookId": "4d1870bf-a6bf-48b4-a9e6-043b4fd8c11a",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cc727011-3009-4ebb-9186-1f224bfd9fbd",
+              "leftValue": "={{ $json.body.params[0].isNumeric() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1780,
+        420
+      ],
+      "id": "c1674b6b-df37-4262-aaaa-5f63df65f11f",
+      "name": "If user_id"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  id, name, username, email\nFROM up_users WHERE id = $1",
+        "options": {
+          "queryReplacement": "={{ $json.body.params[0] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1520,
+        320
+      ],
+      "id": "1827acc7-d52c-4430-a201-dba322faad08",
+      "name": "Get user info by ID"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  id, name, username, email\nFROM up_users WHERE username = $1",
+        "options": {
+          "queryReplacement": "={{ $json.body.params[0] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1520,
+        520
+      ],
+      "id": "b4a3ccf2-32d7-4940-9544-1647948ddfc5",
+      "name": "Get user info by username"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e8c6294c-9d0b-4d72-81d4-9c962b07fe2c",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "aef92907-78b8-4a68-8b24-ebd8bc91d2a3",
+              "leftValue": "={{ $('Webhook').item.json.body.params[2] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "08859bac-930c-40f4-be83-732fcbc9b740",
+              "leftValue": "={{ $('Webhook').item.json.body.params[2] }}",
+              "rightValue": "[",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -740,
+        260
+      ],
+      "id": "ee3edb03-0293-4e57-8b67-9f214b48c940",
+      "name": "Check if correct for (0)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e8c6294c-9d0b-4d72-81d4-9c962b07fe2c",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -740,
+        440
+      ],
+      "id": "2defca0d-c568-485e-a92c-22815b2eb449",
+      "name": "Check if correct for (1)"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "⚠️ We had to deactivate a workflow to keep your instance alive",
+        "emailType": "text",
+        "message": "=Hey {{ $json.name.split(\" \")[0] }},\n\nwe noticed that your instance's database became unstable so that we had to delete some of your execution data.\n\nBest,\nRia from n8n support",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -580,
+        1760
+      ],
+      "id": "c6e29ab8-41a8-40a1-b0c6-9da3d1ed151a",
+      "name": "Data Pruning",
+      "webhookId": "4d1870bf-a6bf-48b4-a9e6-043b4fd8c11a",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## Create Zammad Ticket",
+        "height": 540,
+        "width": 300,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "39bc150d-4155-4685-9ed3-ed23730aee28",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "html": "<html>\n  <body>\n    <style>\n      body {\n        font-family: Roboto, sans-serif;\n      }\n      a {\n        color: #ff6d5a;\n        text-decoration: none;\n        font-weight: bold;\n      }\n    </style>\n    <p>Hey {{ $json.name.split(\" \")[0] }},</p>\n    <p>This is the <b>n8n</b> cloud team.</p>\n    <p>\n      We are contacting you because our engineering team has noticed repeated\n      unscheduled restarts of your n8n cloud instance. After reviewing the\n      available logs around these restarts, it appears that your instance has\n      experienced a number of out-of-memory issues.\n    </p>\n    <p>\n      To allow your instance to restart and prevent it from crashing again, the\n      team has disabled the active workflows with the {{\n      $('Webhook').item.json.body.params[2].split(\",\").length > 1 ? 'IDs' : 'ID'\n      }} \"{{ $('Webhook').item.json.body.params[2] }}\" on your n8n Cloud\n      instance.\n    </p>\n    <p>\n      Firstly, We'd like to apologise for the inconvenience this is causing. We\n      do not have direct access to your workflows, so we cannot confirm what\n      exactly is causing the out-of-memory situation in your case. You may want\n      to take a look at our documentation on memory related errors, which lists\n      a number of possible causes and approaches to avoid them.\n    </p>\n    <p>\n      <a href=\"https://docs.n8n.io/manage-cloud/cloud-data-management/\"\n        >Click Here to find out more</a\n      >\n    </p>\n    <p>\n      We hope this has provided some clarification as to what has happened here.\n      Please accept our sincere apologies for any inconvenience this may cause\n      and please let us know if you have any further questions on the above.\n    </p>\n    <h5>n8n Support</h5>\n  </body>\n</html>\n"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -320,
+        100
+      ],
+      "id": "a74828fb-8f42-4a7f-885f-d8333c9ae5fd",
+      "name": "HTML Crash-Looping"
+    },
+    {
+      "parameters": {
+        "html": "<html>\n  <body>\n    <style>\n      body {\n        font-family: Roboto, sans-serif;\n      }\n      a {\n        color: #ff6d5a;\n        text-decoration: none;\n        font-weight: bold;\n      }\n    </style>\n    <p>Hey {{ $json.name.split(\" \")[0] }},</p>\n    <p>This is the <b>n8n</b> cloud team.</p>\n\n    <p>\n      We noticed that your instance has accumulated a lot of execution data and\n      is approaching the storage limit. In order to avoid the instance from\n      possibly crashing or becoming unresponsive, we had to proactively prune\n      older executions and free up your disk space.\n    </p>\n    <p>\n      For reference, if you have workflows that execute frequently and are\n      successful most of the time, you can configure the amount of execution\n      data stored per workflow in the workflow settings. This will allow you to\n      have more control over the usage of your disk space.\n    </p>\n    <p>\n      Please have a look in our documentation\n      <a\n        href=\"https://docs.n8n.io/manage-cloud/cloud-data-management/#how-to-manage-execution-data-on-cloud\"\n        >here</a\n      >\n    </p>\n    <p>\n      Please reply to this email with your feedback and let us know if you have\n      any questions.\n    </p>\n    <h5>n8n Support</h5>\n  </body>\n</html>\n"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -320,
+        320
+      ],
+      "id": "00e61006-b43a-4748-84bc-3b61543c75b8",
+      "name": "HTML Data-Pruning"
+    },
+    {
+      "parameters": {
+        "content": "# `/cloudbot notify` Workflow\n\nThis workflow gets triggered when the cloudbot command \n```/cloudbot notify [user_id/username] [case_string] [workflow_ids]``` \nis run\n\n-> https://www.notion.so/n8n/Cloudbot-3dbe779836004972b7057bc989526998?pvs=4#19d5b6e0c94f80da8671ecb8dbe5df9f",
+        "height": 240,
+        "width": 720,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2120,
+        20
+      ],
+      "typeVersion": 1,
+      "id": "3ecdbdab-c0cc-4624-a8f6-dcdcce38ccf5",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## TO-DO: \nwould be nice to respond to webhook -> reply in `/cloudbot` thread if there was an error. (Same as for the other cloudbot commands) ",
+        "height": 220,
+        "width": 280
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -580,
+        860
+      ],
+      "typeVersion": 1,
+      "id": "b07f9f33-5a2e-4d41-9930-b2799a095ad2",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://support.n8n.io/api/v1/tickets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"state_id\": \"7\",\n  \"pending_time\": \"{{ $now.plus(5,'days').toUTC().toISO()}}\",\n  \"title\": \"⚠️ We had to deactivate a workflow to keep your instance alive\",\n  \"group\": \"Support\",\n  \"customer_id\": \"guess:{{ $('Check if correct for (0)').item.json.email }}\",\n  \"article\": {\n    \"subject\": \"⚠️ We had to deactivate a workflow to keep your instance alive\",\n    \"body\": \"{{$json.html.replaceAll(`\\n`,``).replaceAll(`\\\"`,`'`)}}\",\n\"type\": \"email\",\n    \"internal\": false,\n    \"content_type\": \"text/html\",\n    \"from\": \"help@n8n.io\",\n    \"to\": \"{{ $('Check if correct for (0)').item.json.email }}\"\n  }\n}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        100
+      ],
+      "id": "a9ce1b8b-2039-4311-ae0f-5590deb2af4c",
+      "name": "Workflow-Deactivation (0)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://support.n8n.io/api/v1/tickets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"state_id\": \"7\",\n  \"pending_time\": \"{{ $now.plus(5,'days').toUTC().toISO()}}\",\n  \"title\": \"⚠️ We had to prune your execution data to keep your instance alive\",\n  \"group\": \"Support\",\n  \"customer_id\": \"guess:{{ $('Check if correct for (1)').item.json.email }}\",\n  \"article\": {\n    \"subject\": \"⚠️ We had to prune your execution data to keep your instance alive\",\n    \"body\": \"{{$json.html.replaceAll(`\\n`,``).replaceAll(`\\\"`,`'`)}}\",\n    \"type\": \"email\",\n    \"internal\": false,\n    \"content_type\": \"text/html\",\n    \"from\": \"help@n8n.io\",\n    \"to\": \"{{ $('Check if correct for (1)').item.json.email }}\"\n  }\n}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        320
+      ],
+      "id": "a91005ba-0b73-4c23-b8fd-3fdf33a4d9b8",
+      "name": "Data-Pruning (1)"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1740,
+        1560
+      ],
+      "id": "570077f4-c65d-41a9-a307-61e4977ac713",
+      "name": "When clicking ‘Test workflow’",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://support.n8n.io/api/v1/tickets/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n   \"title\": \"Test\",\n   \"group\": \"Support\",\n   \"customer_id\": \"guess:ria@n8n.io\",\n   \"article\": {\n      \"subject\": \"Test2\",\n      \"body\": \"<p>email content goes here!</p>\",\n      \"type\": \"email\",\n      \"internal\": false,\n      \"content_type\":\"text/html\",\n      \"from\":\"help@n8n.io\",\n      \"to\":\"ria@n8n.io\"\n   }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1540,
+        1560
+      ],
+      "id": "fde3b103-47ea-4547-b35b-c8c0c4e4d825",
+      "name": "HTTP Request",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## TO-DO: \nfigure out a better way of formatting the email body in zammad API request",
+        "height": 220,
+        "width": 280
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        600
+      ],
+      "typeVersion": 1,
+      "id": "96a41a0b-2163-4ec5-8aaf-95483321481f",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## Nodes Graveyard",
+        "height": 600,
+        "width": 1500,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1860,
+        1480
+      ],
+      "typeVersion": 1,
+      "id": "8229ed84-56dc-49ad-b121-9d836163c70e",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('Webhook').item.json.body.channel_id }}",
+          "mode": "id"
+        },
+        "text": "=User {{ $('Webhook').item.json.body.params[0] }} was successfully notified",
+        "otherOptions": {
+          "thread_ts": {
+            "replyValues": {
+              "thread_ts": "={{ $('Webhook').item.json.body.thread_ts }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        380,
+        220
+      ],
+      "id": "6bc3b5f1-1b64-4830-b2c9-b2fde5e5ffa5",
+      "name": "Update Thread",
+      "webhookId": "cb13857b-5329-49a3-a988-3183f7f7df71"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('Webhook').item.json.body.channel_id }}",
+          "mode": "id"
+        },
+        "text": "=Error: Case string not found. Open https://internal.users.n8n.cloud/workflow/{{ $workflow.id }} to debug.",
+        "otherOptions": {
+          "thread_ts": {
+            "replyValues": {
+              "thread_ts": "={{ $('Webhook').item.json.body.thread_ts }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -1020,
+        620
+      ],
+      "id": "d361dcd5-377d-47c6-8ac0-dd16cdf86491",
+      "name": "Add Case Error to Thread",
+      "webhookId": "cb13857b-5329-49a3-a988-3183f7f7df71"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('Webhook').item.json.body.channel_id }}",
+          "mode": "id"
+        },
+        "text": "=Error: Parameters were not correct. Open https://internal.users.n8n.cloud/workflow/{{ $workflow.id }} to debug.",
+        "otherOptions": {
+          "thread_ts": {
+            "replyValues": {
+              "thread_ts": "={{ $('Webhook').item.json.body.thread_ts }}"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -360,
+        600
+      ],
+      "id": "aabab686-dac5-4067-b281-6f34107d9d75",
+      "name": "Add Parameter Error to Thread",
+      "webhookId": "cb13857b-5329-49a3-a988-3183f7f7df71"
+    },
+    {
+      "parameters": {
+        "url": "https://support.n8n.io/api/v1/ticket_states",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -200,
+        1580
+      ],
+      "id": "e5f31cee-2a48-4a1e-a138-d2e4ebae0577",
+      "name": "get states"
+    },
+    {
+      "parameters": {
+        "url": "https://support.n8n.io/api/v1/tickets/14799",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        20,
+        1580
+      ],
+      "id": "7a0f5598-a8f5-4f2a-a18d-4d2d6e35c30d",
+      "name": "get ticket"
+    },
+    {
+      "parameters": {
+        "content": "## For Testing: ",
+        "height": 320,
+        "width": 500,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -280,
+        1480
+      ],
+      "typeVersion": 1,
+      "id": "fae3c579-f8b2-4160-b10d-1d34f7e57980",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        1480
+      ],
+      "id": "116b5306-07c3-4336-ae2e-728341ecea4a",
+      "name": "Sticky Note6"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If user_id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If user exists": {
+      "main": [
+        [
+          {
+            "node": "Get First User",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get User": {
+      "main": [
+        [
+          {
+            "node": "If user exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Check if correct for (0)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check if correct for (1)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Case Error to Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If user_id": {
+      "main": [
+        [
+          {
+            "node": "Get user info by ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get user info by username",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get user info by ID": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get user info by username": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if correct for (0)": {
+      "main": [
+        [
+          {
+            "node": "HTML Crash-Looping",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Parameter Error to Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if correct for (1)": {
+      "main": [
+        [
+          {
+            "node": "HTML Data-Pruning",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add Parameter Error to Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML Crash-Looping": {
+      "main": [
+        [
+          {
+            "node": "Workflow-Deactivation (0)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML Data-Pruning": {
+      "main": [
+        [
+          {
+            "node": "Data-Pruning (1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow-Deactivation (0)": {
+      "main": [
+        [
+          {
+            "node": "Update Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data-Pruning (1)": {
+      "main": [
+        [
+          {
+            "node": "Update Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "internal.users.n8n.cloud",
+            "user-agent": "axios/1.7.4",
+            "content-length": "318",
+            "accept": "application/json,text/html,application/xhtml+xml,application/xml,text/*;q=0.9, image/*;q=0.8, */*;q=0.7",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "content-type": "application/json",
+            "x-forwarded-for": "10.255.0.2",
+            "x-forwarded-host": "internal.users.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "aadb35d09445",
+            "x-real-ip": "10.255.0.2"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "channel_id": "C05JVLF6606",
+            "thread_ts": "1739976191.056599",
+            "command": "notify",
+            "flags": [],
+            "env": {},
+            "params": [
+              "ria-n8n",
+              "clean-execs"
+            ],
+            "user": "ria",
+            "response_url": "https://hooks.slack.com/commands/TG9695PUK/8500191832928/UnVtwCHvtIc3yWRFKZ8NNnKH",
+            "isManual": false,
+            "isTest": false,
+            "isDirect": false,
+            "workflow_id": "xtz0nYZE5vlwFqmF"
+          },
+          "webhookUrl": "https://internal.users.n8n.cloud/webhook/6318caf7-7ddc-4286-9c96-e4a6d6d923ad",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "get states": [
+      {
+        "json": {
+          "id": 1,
+          "state_type_id": 1,
+          "name": "new",
+          "next_state_id": null,
+          "ignore_escalation": false,
+          "default_create": true,
+          "default_follow_up": false,
+          "note": null,
+          "active": true,
+          "updated_by_id": 1,
+          "created_by_id": 1,
+          "created_at": "2022-06-20T06:50:44.537Z",
+          "updated_at": "2022-06-20T06:50:44.565Z"
+        }
+      },
+      {
+        "json": {
+          "id": 2,
+          "state_type_id": 2,
+          "name": "open",
+          "next_state_id": null,
+          "ignore_escalation": false,
+          "default_create": false,
+          "default_follow_up": true,
+          "note": null,
+          "active": true,
+          "updated_by_id": 1,
+          "created_by_id": 1,
+          "created_at": "2022-06-20T06:50:44.559Z",
+          "updated_at": "2022-06-20T06:50:44.559Z"
+        }
+      },
+      {
+        "json": {
+          "id": 3,
+          "state_type_id": 3,
+          "name": "pending reminder",
+          "next_state_id": null,
+          "ignore_escalation": true,
+          "default_create": false,
+          "default_follow_up": false,
+          "note": "",
+          "active": false,
+          "updated_by_id": 6789,
+          "created_by_id": 1,
+          "created_at": "2022-06-20T06:50:44.577Z",
+          "updated_at": "2025-02-17T13:29:16.271Z"
+        }
+      },
+      {
+        "json": {
+          "id": 4,
+          "state_type_id": 5,
+          "name": "closed",
+          "next_state_id": null,
+          "ignore_escalation": true,
+          "default_create": false,
+          "default_follow_up": false,
+          "note": null,
+          "active": true,
+          "updated_by_id": 1,
+          "created_by_id": 1,
+          "created_at": "2022-06-20T06:50:44.588Z",
+          "updated_at": "2022-06-20T06:50:44.588Z"
+        }
+      },
+      {
+        "json": {
+          "id": 5,
+          "state_type_id": 6,
+          "name": "merged",
+          "next_state_id": null,
+          "ignore_escalation": true,
+          "default_create": false,
+          "default_follow_up": false,
+          "note": null,
+          "active": true,
+          "updated_by_id": 1,
+          "created_by_id": 1,
+          "created_at": "2022-06-20T06:50:44.599Z",
+          "updated_at": "2022-06-20T06:50:44.599Z"
+        }
+      },
+      {
+        "json": {
+          "id": 7,
+          "state_type_id": 4,
+          "name": "pending close",
+          "next_state_id": 4,
+          "ignore_escalation": true,
+          "default_create": false,
+          "default_follow_up": false,
+          "note": null,
+          "active": true,
+          "updated_by_id": 1,
+          "created_by_id": 1,
+          "created_at": "2022-06-20T06:50:44.624Z",
+          "updated_at": "2022-06-20T06:50:44.624Z"
+        }
+      },
+      {
+        "json": {
+          "id": 8,
+          "state_type_id": 2,
+          "name": "escalated",
+          "next_state_id": null,
+          "ignore_escalation": false,
+          "default_create": false,
+          "default_follow_up": false,
+          "note": "This state is to be used when the ticket is pending response from another team that the issue was escalated to.",
+          "active": true,
+          "updated_by_id": 6789,
+          "created_by_id": 5508,
+          "created_at": "2024-09-27T22:19:43.783Z",
+          "updated_at": "2025-02-11T10:58:25.278Z"
+        }
+      },
+      {
+        "json": {
+          "id": 9,
+          "state_type_id": 4,
+          "name": "snooze",
+          "next_state_id": 2,
+          "ignore_escalation": true,
+          "default_create": false,
+          "default_follow_up": false,
+          "note": "Snooze tickets which then move back to Open after Snoozed. When \"Pending Till\" is reached, it reopens.",
+          "active": true,
+          "updated_by_id": 6789,
+          "created_by_id": 6789,
+          "created_at": "2025-01-24T14:36:28.324Z",
+          "updated_at": "2025-01-30T17:32:19.857Z"
+        }
+      },
+      {
+        "json": {
+          "id": 10,
+          "state_type_id": 3,
+          "name": "pending",
+          "next_state_id": 4,
+          "ignore_escalation": true,
+          "default_create": false,
+          "default_follow_up": false,
+          "note": "Status to send tickets after they are handled. An automatic email will be sent on Pending Till reach, informing we will close the ticket and moving to pending close with 3 days of Till.",
+          "active": true,
+          "updated_by_id": 6789,
+          "created_by_id": 6789,
+          "created_at": "2025-01-24T17:26:08.106Z",
+          "updated_at": "2025-01-30T17:32:13.101Z"
+        }
+      }
+    ]
+  },
+  "versionId": "be6f6db7-6756-443a-b224-f6c3d9021654",
+  "triggerCount": 0,
+  "tags": []
+}
