@@ -1,0 +1,404 @@
+{
+  "createdAt": "2025-06-10T11:05:32.124Z",
+  "updatedAt": "2025-06-10T13:40:22.000Z",
+  "id": "X2ehcUJOLMulpuI1",
+  "name": "test telegram",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Make sure From exists and is a string\nconst rawFrom = $input.first().json.From;\nconsole.log('rawfrom',rawFrom );\nlet cleanEmail = \"\";\n\n// Proceed only if rawFrom is a valid string\nif (typeof rawFrom === \"string\" && rawFrom.trim() !== \"\") {\n  const match = rawFrom.match(/<(.+?)>/);\n  console.log('match', match);\n  cleanEmail = match ? match[1] : rawFrom.trim();\n} else {\n  cleanEmail = \"[Missing From field]\";\n}\n\nreturn [\n  {\n    json: {\n      cleanEmail\n    }\n  }\n];\n"
+      },
+      "id": "66b07e27-2d1f-4490-929c-c2220253adca",
+      "name": "Clean Email",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        240,
+        260
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $json.id }}"
+      },
+      "id": "2ac7357f-ae1b-4b3d-a755-7c34e81a2a90",
+      "name": "Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        240,
+        60
+      ],
+      "webhookId": "0c25cbb3-b954-4c3a-aabc-9f4473b9f733",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SAbdUoYgrWBTC6qI",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "7692634060",
+        "text": "=ASUKA : {{ $('Get Email').item.json.snippet }}",
+        "additionalFields": {}
+      },
+      "id": "8b1992e3-8332-440c-8259-4cbd48084edc",
+      "name": "Send Message",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        1820,
+        260
+      ],
+      "webhookId": "836270b1-beef-4520-b024-30b72af1582a",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "r9TaqTgeWV0uYQ6X",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "7f6c2c11-6204-4f36-8e57-dcc9efc93433",
+              "operator": {
+                "name": "filter.operator.equals",
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.cleanEmail }}",
+              "rightValue": "=asuka.watanabe@n8n.io"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0e62073e-7202-4da5-8903-e8c31c2ec393",
+      "name": "Verify Mail",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        460,
+        260
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get subject from previous node (e.g., IMAP Email node)\nconst subject = $input.first().json.Subject;\n\nconst stockSymbol = subject.split('for ')[1]?.trim() || '';\n\nreturn [\n  {\n    json: {\n      symbol: stockSymbol,\n      originalSubject: subject,\n    }\n  }\n];\n"
+      },
+      "id": "b52ef722-24e2-4753-baf3-bf0139fdafd4",
+      "name": "Extract Company Name",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        900,
+        260
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1M9Ieq9rVS1zsEi_w15Gi8bV7gGb9oTqBdLUE96wYuxk",
+          "mode": "list",
+          "cachedResultName": "test asuka",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M9Ieq9rVS1zsEi_w15Gi8bV7gGb9oTqBdLUE96wYuxk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PBvePZN2yvVg23hDIDB62e91ogTgbuNXVduZTai-bZc/edit#gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "Date": "={{ $json.formattedDate }}",
+            "Stock": "={{ $('Extract Company Name').item.json.symbol }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Date",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Stock",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Stock",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f9abef03-71c3-4d7b-92ff-6eed7af102c6",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1560,
+        260
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1rbprSXVpx9AYy3C",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "timezone": "Asia/kolkata"
+        }
+      },
+      "id": "06236f3a-4833-417e-9701-b6915ac2a602",
+      "name": "Current Date & Time",
+      "type": "n8n-nodes-base.dateTime",
+      "position": [
+        1120,
+        260
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "formatDate",
+        "date": "={{ $json.currentDate }}",
+        "format": "custom",
+        "customFormat": "DD",
+        "options": {}
+      },
+      "id": "a3c8d142-b412-40f6-964c-eeadb2a0c844",
+      "name": "Formatted Date & Time",
+      "type": "n8n-nodes-base.dateTime",
+      "position": [
+        1340,
+        260
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $('Email Received').item.json.id }}"
+      },
+      "id": "3db3236e-fe3b-4ef5-b154-88c2382aeb2f",
+      "name": "Get Email",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        700,
+        260
+      ],
+      "webhookId": "1fd0763d-5989-4fc4-aa5f-191eb8ee51bc",
+      "typeVersion": 2.1,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SAbdUoYgrWBTC6qI",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Read Emails",
+        "height": 400,
+        "width": 380,
+        "color": 7
+      },
+      "id": "cc5578a1-6255-4b91-9d6b-de0bbd14b5ac",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "id": "0aec07b1-2e91-454c-92a8-e8b2848c1f1c",
+      "name": "Email Received",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "position": [
+        20,
+        160
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SAbdUoYgrWBTC6qI",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Identify Email",
+        "height": 200,
+        "width": 180,
+        "color": 7
+      },
+      "id": "4cdc44f3-da44-4eb1-a7da-bbb72778ceca",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        420,
+        200
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Clean Email": {
+      "main": [
+        [
+          {
+            "node": "Verify Mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Mail": {
+      "main": [
+        [
+          {
+            "node": "Get Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Company Name": {
+      "main": [
+        [
+          {
+            "node": "Current Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Send Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Current Date & Time": {
+      "main": [
+        [
+          {
+            "node": "Formatted Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatted Date & Time": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Email": {
+      "main": [
+        [
+          {
+            "node": "Extract Company Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Received": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Clean Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Email Received": {
+      "Email Received": {
+        "lastTimeChecked": 1749562710,
+        "possibleDuplicates": [
+          "1975a1059dcada86",
+          "1975a0eb8c44fa6b"
+        ]
+      }
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "4144ae0b-04e5-41f0-98ce-1bd0c1163f71",
+  "triggerCount": 1,
+  "tags": []
+}
