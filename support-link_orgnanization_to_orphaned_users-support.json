@@ -1,0 +1,394 @@
+{
+  "createdAt": "2025-06-06T14:22:17.169Z",
+  "updatedAt": "2025-06-06T14:22:17.169Z",
+  "id": "9kwrFTCUrPTEkuxL",
+  "name": "Support Link_orgnanization_to_orphaned_users",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "02a99198-6e9a-4271-a0cd-3ced893487f4",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "organization",
+        "operation": "getAll",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.zammad",
+      "typeVersion": 1,
+      "position": [
+        220,
+        180
+      ],
+      "id": "5948a40a-e25c-41f2-9c25-dc8d464e3f2d",
+      "name": "Zammad"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "domain",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        900,
+        260
+      ],
+      "id": "ffea2d65-a0c1-454c-9ba7-7a4301208406",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ac29cbd6-a57d-4ea7-951d-c4063822e98d",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "ccae9a52-25b8-4532-adce-8e32fd083698",
+              "leftValue": "={{ $json.domain }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "36485633-4791-4234-a719-77afba7d0913",
+              "leftValue": "={{ $json.active }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        180
+      ],
+      "id": "c1ca5e48-0e24-4173-b072-1b0568257604",
+      "name": "Active organizations"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b70a9886-4795-41ae-84d0-daeb9cd4e724",
+              "name": "organization_id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "f7f6ec27-9924-48b0-b926-a90f5c20659b",
+              "name": "organization_name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "a28ab33d-d6cb-4547-8786-d64d8724d7ad",
+              "name": "domain",
+              "value": "={{ $json.domain }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        180
+      ],
+      "id": "37b9a767-b102-42e6-bc7b-3f73307288bd",
+      "name": "Organizatons"
+    },
+    {
+      "parameters": {
+        "url": "https://support.n8n.io/api/v1/users/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=email:@{{ $json.domain }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        20
+      ],
+      "id": "c49e43d9-1b6d-4aa8-b5a2-05b3b71dc46c",
+      "name": "Get users on organization domain"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "68520a22-23ca-41fa-a813-38660d062c7b",
+              "leftValue": "={{ $json.organization_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "fbe40986-1a81-4239-9914-7dd6b75083b0",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "@paddle.com",
+              "operator": {
+                "type": "string",
+                "operation": "notEndsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        20
+      ],
+      "id": "5784851a-6fdd-4294-89d1-d723f7f920ad",
+      "name": "Users without organization linked",
+      "notesInFlow": true,
+      "notes": "Exclude Paddle"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "049a356c-bd69-4e1b-90ae-8f829cbfd534",
+              "name": "user_id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "924700a1-5c41-4d4d-8f90-583ceb03fcb5",
+              "name": "domain",
+              "value": "={{ $json.email.split('@')[1] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1340,
+        20
+      ],
+      "id": "201dc004-6a8e-4b71-a53f-ecddf98e2fcf",
+      "name": "Users"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "id": "={{ $json.user_id }}",
+        "updateFields": {
+          "organization": "={{ $json.organization_name }}"
+        }
+      },
+      "type": "n8n-nodes-base.zammad",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        260
+      ],
+      "id": "fdcb0905-0e9b-4dc7-98bf-f807971654c6",
+      "name": "Zammad: Link organization"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        180
+      ],
+      "id": "55037b2d-7379-48db-9d7e-2a610babcb18",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Zammad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zammad": {
+      "main": [
+        [
+          {
+            "node": "Active organizations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Active organizations": {
+      "main": [
+        [
+          {
+            "node": "Organizatons",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Zammad: Link organization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Organizatons": {
+      "main": [
+        [
+          {
+            "node": "Get users on organization domain",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get users on organization domain": {
+      "main": [
+        [
+          {
+            "node": "Users without organization linked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Users without organization linked": {
+      "main": [
+        [
+          {
+            "node": "Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Users": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Zammad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "fe27ae65-4bc3-4bdc-a47a-3f8dff89fb16",
+  "triggerCount": 0,
+  "tags": [
+    {
+      "createdAt": "2025-06-06T13:31:13.531Z",
+      "updatedAt": "2025-06-06T13:31:13.531Z",
+      "id": "fbWVKyIr4pGbfxDT",
+      "name": "support"
+    }
+  ]
+}
