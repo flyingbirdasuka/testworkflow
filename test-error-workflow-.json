@@ -1,0 +1,71 @@
+{
+  "createdAt": "2025-05-15T08:49:18.372Z",
+  "updatedAt": "2025-05-15T09:49:06.000Z",
+  "id": "SvLUSZUWimD22aJ1",
+  "name": "Test error workflow",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "var test = $input.al()\nreturn test;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        -60
+      ],
+      "id": "4872acdc-b8de-421b-86c4-6e16b541298e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -40,
+        -60
+      ],
+      "id": "86c788f4-9f57-49b7-ade0-dd7f2ef33f3c",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "QfjFGacIYRtGcB2k"
+  },
+  "staticData": {
+    "node:Schedule Trigger": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": {},
+  "versionId": "848d45fd-33f3-4eff-94b4-950f49ba336c",
+  "triggerCount": 1,
+  "tags": []
+}
