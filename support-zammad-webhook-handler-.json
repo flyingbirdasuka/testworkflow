@@ -1,0 +1,1409 @@
+{
+  "createdAt": "2025-06-06T14:21:10.415Z",
+  "updatedAt": "2025-06-06T14:21:24.000Z",
+  "id": "eOYSgFPKJF3Idoze",
+  "name": "Support zammad webhook handler",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "requestMethod": "POST",
+        "url": "https://support.n8n.io/api/v1/ticket_articles",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $('Webhook').first().json.body.ticket.id }}"
+            },
+            {
+              "name": "body",
+              "value": "={{ $json.html }}"
+            },
+            {
+              "name": "content_type",
+              "value": "text/html"
+            },
+            {
+              "name": "type",
+              "value": "note"
+            },
+            {
+              "name": "internal",
+              "value": "true"
+            },
+            {
+              "name": "sender",
+              "value": "Agent"
+            }
+          ]
+        }
+      },
+      "name": "[Zammad] Add article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        500,
+        400
+      ],
+      "id": "af71afbd-043a-4df5-93aa-bfb2e12d9a04"
+    },
+    {
+      "parameters": {
+        "content": "### Add Enterprise info if customer is enterprise\n",
+        "height": 437,
+        "width": 1351,
+        "color": 7
+      },
+      "id": "67f74197-b902-4288-bcd3-c9c9b542998b",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://support.n8n.io/api/v1/users/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $('Webhook').item.json.body.ticket.customer.email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "94a5bb04-8b01-4f33-bca1-d53bcc349d30",
+      "name": "Search for user in Zammad",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        60,
+        1300
+      ],
+      "alwaysOutputData": true,
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "0c4c95d6-d53f-4cd9-b7a1-abc85015e1bc",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ff30306f-ab1a-4c3e-8233-7d467982460b",
+      "name": "If user exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        280,
+        1300
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1IF_ayu6T5ZauZ7OMA7-qKgOs4MzAwdBu1Rp0GqNne1g",
+          "mode": "list",
+          "cachedResultName": "Customers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IF_ayu6T5ZauZ7OMA7-qKgOs4MzAwdBu1Rp0GqNne1g/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 46103228,
+          "mode": "list",
+          "cachedResultName": "Enterprise customers",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IF_ayu6T5ZauZ7OMA7-qKgOs4MzAwdBu1Rp0GqNne1g/edit#gid=46103228"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "License contact",
+              "lookupValue": "={{ $json.contact_email }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7dca2c27-1ac4-430e-8cbb-8df767629ec2",
+      "name": "Get existing customer domain",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.1,
+      "position": [
+        780,
+        1200
+      ],
+      "alwaysOutputData": false,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5058edaf-9cc8-4df0-b271-2593b5db9e88",
+              "name": "=message",
+              "value": "=<h3>👑Enterprise data</h3>\nName: {{ $json[\"Name\"] }}<br>\nSupport Contact: yes/no? \n\nProduct: {{ $json[\"Product\"] }}<br>\nSupport plan: {{ $json[\"Support plan\"] }}<br>\nStart date: {{ $json[\"Start date\"] }}<br>\nLast renewal date: {{ $json[\"Last renewal date\"] }}<br>\nRenewal: {{ $json[\"Renewal\"] }}<br>\nContract Value: {{ $json[\"Contract value\"] }} {{ $json[\"Currency\"] }}<br>\nTerm: {{ $json[\"Term (months)\"] }} months<br>\nInvoice frequency: {{ $json[\"Invoice frequency\"] }}<br>\nLicense contact: {{ $json[\"License contact\"] }}<br>\nLast adoption check-in email: {{ $json[\"Last adoption checkin email\"] }}<br>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ce99f880-78d9-4a57-b0af-dacd56ef628d",
+      "name": "Prepare \"enterprise data\"",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        980,
+        1200
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5058edaf-9cc8-4df0-b271-2593b5db9e88",
+              "name": "=message",
+              "value": "=No enterprise data found",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "47edcab9-97fe-47f6-88ff-ca9be2b9cbda",
+      "name": "Prepare \"not enterrprise\"",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        580,
+        1400
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "requestMethod": "POST",
+        "url": "https://support.n8n.io/api/v1/ticket_articles",
+        "options": {},
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "ticket_id",
+              "value": "={{ $('Webhook').first().json.body.ticket.id }}"
+            },
+            {
+              "name": "body",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "content_type",
+              "value": "text/html"
+            },
+            {
+              "name": "type",
+              "value": "note"
+            },
+            {
+              "name": "internal",
+              "value": "true"
+            },
+            {
+              "name": "sender",
+              "value": "Agent"
+            }
+          ]
+        }
+      },
+      "name": "[Zammad] Add article enterprise info",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        1400
+      ],
+      "id": "bfae921b-8f59-4ff1-adab-03a84c3e3554",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "organization",
+        "operation": "get",
+        "id": "={{ $json.organization_id }}"
+      },
+      "id": "e2f437cf-5c9d-4fbb-b121-a203cb9e9a26",
+      "name": "Zammad",
+      "type": "n8n-nodes-base.zammad",
+      "typeVersion": 1,
+      "position": [
+        580,
+        1200
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ce9476fb-2166-4996-b186-d7696e016b26",
+        "authentication": "basicAuth",
+        "options": {}
+      },
+      "id": "1d982097-3e05-465c-9526-7e1a2aa23e1e",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        400
+      ],
+      "webhookId": "ce9476fb-2166-4996-b186-d7696e016b26"
+    },
+    {
+      "parameters": {
+        "content": "# Zammad webhook handler\nThis is a single router workflow for managing automations that occur when a new support ticket is created / received in Zammad.\n\n### Related workflows\nTag New Zammad Ticket - https://internal.users.n8n.cloud/workflow/vY2C118LIT8guVuz",
+        "height": 220,
+        "width": 480,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "ecf95882-7a4d-41c2-b300-72983a356614",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.ticket.created_by.email }}",
+                    "rightValue": "@n8n.io",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notContains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Not @n8n.io"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        40,
+        820
+      ],
+      "id": "4a73790e-c3ab-4b3a-b21e-f0c1cd29614e",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "content": "# AI Tagger\n\nThis section of the workflow calls [🤖 AI-Tagger - Tag New Zammad Tickets](https://internal.users.n8n.cloud/workflow/vY2C118LIT8guVuz) for tickets raised by non-n8n.io users",
+        "height": 540,
+        "width": 1160
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        600
+      ],
+      "typeVersion": 1,
+      "id": "4b3b761d-ae7c-47f8-80c6-af61359f4f03",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        260,
+        720
+      ],
+      "id": "13febb60-0020-41ef-8cf9-7b6e942737a1",
+      "name": "Is end-user",
+      "notesInFlow": true,
+      "notes": "not @n8n.io email"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        260,
+        920
+      ],
+      "id": "53a7fd63-1e15-44e2-9a15-ddeb94f1bf9e",
+      "name": "Other case"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        700,
+        720
+      ],
+      "id": "66c0d907-1524-4192-88e7-0baec88ace10",
+      "name": "Update ticket in zammad"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "vY2C118LIT8guVuz",
+          "mode": "list",
+          "cachedResultName": "Support — Tag New Zammad Tickets v1"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticketBody": "={{ $json.body.article.body.removeTags() }}",
+            "ticketSubject": "={{ $json.body.article?.subject || \"(No subject set)\" }}",
+            "zammadTicketId": "={{ $json.body.ticket.id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "zammadTicketId",
+              "displayName": "zammadTicketId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "ticketSubject",
+              "displayName": "ticketSubject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "ticketBody",
+              "displayName": "ticketBody",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        720
+      ],
+      "id": "752028a7-15b1-4679-b575-7fe9ee8d5d80",
+      "name": "Tag New Zammad Tickets"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "w27TKwynQ4VJuXAS",
+          "mode": "list",
+          "cachedResultName": "Revenue Operations — Workflow Automation | Get cloud user details v2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "user": "={{ $('Webhook').first().json.body.ticket.customer.email }}"
+          },
+          "matchingColumns": [
+            "user"
+          ],
+          "schema": [
+            {
+              "id": "user",
+              "displayName": "user",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        60,
+        400
+      ],
+      "id": "b10e4e11-0c5e-4a04-a20c-e7b437ca5a64",
+      "name": "Get cloud user details",
+      "alwaysOutputData": true,
+      "notesInFlow": false,
+      "notes": "Calls Support | Fetch pro user details"
+    },
+    {
+      "parameters": {
+        "html": "<h3>n8n cloud data</h3>\n\n<p>{{ $json?.cloud_db?.up_users?.username ? `User: ${$json.cloud_db.up_users.username}<br>` : `` }}\n{{ $json?.cloud_db?.up_users?.email ? `Email: ${$json.cloud_db.up_users.email}<br>` : `` }}\n{{ $json?.paddle?.plan?.name ? `Plan: ${$json.paddle.plan.name}<br>` : `` }}\n{{ $json?.paddle?.subscription?.subscription_id ? `Subscription: <a href=\"https://vendors.paddle.com/subscriptions/customers/manage/${$json.paddle.subscription.subscription_id}\">${$json.paddle.subscription.subscription_id}</a><br>` : `` }}\n{{ $json?.paddle?.subscription?.state ? `Subscription state: ${$json.paddle.subscription.state}<br>` : `` }}\n{{ $json?.cloud_db?.up_users?.username ? `<br><a href=\"https://internal.users.n8n.cloud/webhook/mission-control?q=${$json.cloud_db.up_users.username}\">Open in Mission Control</a>` : `` }} \n<!-- NO CLOUD DATA -->{{ Object.keys($json).length == 0 ? `No cloud data found for ${$('Webhook').first().json.body.ticket.customer.email}` : `` }}\n</p>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        280,
+        400
+      ],
+      "id": "fc249ef7-88bd-45e4-a7fb-e104356edd99",
+      "name": "Prepare article"
+    },
+    {
+      "parameters": {
+        "content": "# n8n cloud data\n\nThis section of the workflow reads data from our production database as well as Paddle and adds it as an internal note to the ticket",
+        "height": 340,
+        "width": 760,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        240
+      ],
+      "typeVersion": 1,
+      "id": "933fff99-7b0f-4fac-b5a4-0156b52f7b11",
+      "name": "Sticky Note2"
+    }
+  ],
+  "connections": {
+    "Search for user in Zammad": {
+      "main": [
+        [
+          {
+            "node": "If user exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If user exists": {
+      "main": [
+        [
+          {
+            "node": "Zammad",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare \"not enterrprise\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get existing customer domain": {
+      "main": [
+        [
+          {
+            "node": "Prepare \"enterprise data\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare \"enterprise data\"": {
+      "main": [
+        [
+          {
+            "node": "[Zammad] Add article enterprise info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare \"not enterrprise\"": {
+      "main": [
+        [
+          {
+            "node": "[Zammad] Add article enterprise info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get cloud user details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zammad": {
+      "main": [
+        [
+          {
+            "node": "Get existing customer domain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Is end-user",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Other case",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is end-user": {
+      "main": [
+        [
+          {
+            "node": "Tag New Zammad Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag New Zammad Tickets": {
+      "main": [
+        [
+          {
+            "node": "Update ticket in zammad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get cloud user details": {
+      "main": [
+        [
+          {
+            "node": "Prepare article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare article": {
+      "main": [
+        [
+          {
+            "node": "[Zammad] Add article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "Search for user in Zammad": [
+      {
+        "json": {
+          "paddle": {
+            "subscription_id": 29353758,
+            "plan_id": 845267,
+            "user_id": 98099755,
+            "user_email": "alqemika@gmail.com",
+            "marketing_consent": false,
+            "update_url": "https://subscription-management.paddle.com/subscription/29353758/hash/20a9992ad5004dba1bc88a4be8a0d3bcf05caef8e0efc14b87b0fe44a66dadf6/update",
+            "cancel_url": "https://subscription-management.paddle.com/subscription/29353758/hash/20a9992ad5004dba1bc88a4be8a0d3bcf05caef8e0efc14b87b0fe44a66dadf6/cancel",
+            "state": "active",
+            "signup_date": "2024-10-18 00:16:31",
+            "last_payment": {
+              "amount": 120,
+              "currency": "BRL",
+              "date": "2025-01-09"
+            },
+            "linked_subscriptions": [],
+            "custom_data": {
+              "isSignup": false,
+              "signInType": "opt-in",
+              "partnerstack_customer_key": 196283
+            },
+            "next_payment": {
+              "amount": 60,
+              "currency": "BRL",
+              "date": "2025-02-09"
+            },
+            "payment_information": {
+              "payment_method": "card",
+              "card_type": "visa",
+              "last_four_digits": "1159",
+              "expiry_date": "08/2032"
+            },
+            "plan": {
+              "id": 845267,
+              "name": "Cloud Starter",
+              "billing_type": "month",
+              "billing_period": 1,
+              "initial_price": {
+                "USD": "0.00",
+                "GBP": "0.00",
+                "EUR": "0.00",
+                "BRL": "0.00"
+              },
+              "recurring_price": {
+                "USD": "24.00",
+                "GBP": "24.00",
+                "EUR": "24.00",
+                "BRL": "150.00"
+              },
+              "trial_days": 0
+            }
+          },
+          "prodDb": {
+            "user_id": 196283,
+            "members": "alqemika@gmail.com (owner)",
+            "user_created_at": "2024-10-04T01:08:36.325Z",
+            "id": 125950,
+            "username": "alqemika",
+            "email": "alqemika@gmail.com",
+            "provider": "local",
+            "password": "•••••",
+            "confirmed": true,
+            "blocked": null,
+            "role": 1,
+            "created_at": "2024-10-04T01:08:36.961Z",
+            "updated_at": "2025-01-13T19:33:57.903Z",
+            "token": null,
+            "name": "alqemika",
+            "marketingConsent": false,
+            "accountId": 192461,
+            "has_early_access": false,
+            "account_created_at": "2024-10-04T01:08:36.944Z",
+            "isSetup": true,
+            "information": {
+              "answerId": "986dga8lqdrsejyg2986dgwjku6lj6zj",
+              "surveyId": "OArzTwNz",
+              "what_team_are_you_on": "Everything",
+              "how_did_you_hear_about_n8n": "YouTube",
+              "what_is_the_size_of_your_company": "<20",
+              "have_you_used_any_of_these_tools_before": [
+                "Make"
+              ]
+            },
+            "timezone": "America/Sao_Paulo",
+            "planSpecId": 31,
+            "taxInclusive": false,
+            "bucket": null,
+            "usersToInvite": [],
+            "selectedApps": [
+              "googleSheets",
+              "gmail",
+              "airtable",
+              "googleDrive",
+              "googleCalendar",
+              "openAi",
+              "googleDocs",
+              "whatsApp",
+              "supabase",
+              "calendly",
+              "wordpress",
+              "shopify",
+              "facebook",
+              "googleAnalytics",
+              "googleChat",
+              "googleAds",
+              "highLevel"
+            ],
+            "auto_update_enabled": true,
+            "planId": 845267,
+            "status": "1",
+            "customerId": 98099755,
+            "customerSince": "2024-10-18T00:16:44.654Z",
+            "subscriptionId": 29353758,
+            "updateUrl": "https://subscription-management.paddle.com/subscription/29353758/hash/20a9992ad5004dba1bc88a4be8a0d3bcf05caef8e0efc14b87b0fe44a66dadf6/update",
+            "cancelUrl": "https://subscription-management.paddle.com/subscription/29353758/hash/20a9992ad5004dba1bc88a4be8a0d3bcf05caef8e0efc14b87b0fe44a66dadf6/cancel",
+            "subscribedSince": "2025-01-09T14:10:47.363Z",
+            "periodEndsAt": "2025-01-09T00:00:00.000Z",
+            "pausedFrom": null,
+            "cancellationEffectiveDate": null,
+            "instance_created_at": "2024-10-04T01:08:36.961Z",
+            "executionSaveStrategies": "{failed,manual,successful}",
+            "configuration": {
+              "maxExecutionTimeout": 300,
+              "maxExecutions": 2500,
+              "maxActiveWorkflows": 5,
+              "maxExecutionDataAge": 168,
+              "maxExecutionDataCount": 2500,
+              "cpu": 10,
+              "ram": 320,
+              "volumeSize": 1024,
+              "queueModeEnabled": false,
+              "advancedExecutionFiltersEnabled": false,
+              "enabledFeatures": [
+                "sharing"
+              ],
+              "licenseFeatures": {
+                "feat:sharing": true,
+                "quota:users": -1,
+                "feat:projectRole:admin": true,
+                "quota:maxTeamProjects": 1,
+                "feat:aiAssistant": true,
+                "feat:askAi": true,
+                "feat:debugInEditor": true,
+                "feat:workflowHistory": true,
+                "quota:workflowHistoryPrune": 24,
+                "feat:aiCredits": true,
+                "quota:aiCredits": 100
+              },
+              "licenseType": "ephemeral",
+              "executionConcurrency": 5,
+              "timezone": "America/Sao_Paulo",
+              "executionSaveStrategies": [
+                "failed",
+                "manual",
+                "successful"
+              ],
+              "version": {
+                "id": 721,
+                "updatedAt": "2024-12-19T16:15:37.384Z",
+                "createdAt": "2024-12-19T17:15:37.180Z",
+                "name": "1.73.1",
+                "encodedName": "000001.000073.000001",
+                "isStable": true,
+                "isAvailableOnCloud": true,
+                "major": 1,
+                "minor": 73,
+                "patch": 1,
+                "showReleaseNotification": null,
+                "hasCoreChanges": null,
+                "hasNewNodes": null,
+                "hasNodeEnhancements": null,
+                "hasSecurityIssue": null,
+                "hasSecurityFix": null,
+                "securityIssueFixVersion": null,
+                "hasBreakingChange": null,
+                "hasBugFixes": null,
+                "documentationUrl": null,
+                "nodes": null,
+                "isEarlyAccess": false,
+                "expirationDate": "2025-06-17"
+              },
+              "instanceFeatureFlags": {
+                "taskRunner": false
+              }
+            },
+            "usedLimits": {
+              "timeframe": "2025-1",
+              "executions": 233,
+              "activeWorkflows": 2
+            },
+            "versionId": 721,
+            "instanceId": null,
+            "cluster": "prod-users-gwc-5",
+            "configurationOverrides": null
+          },
+          "trackingDb": {
+            "status": "unavailable"
+          }
+        }
+      }
+    ],
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "internal.users.n8n.cloud",
+            "user-agent": "Zammad User Agent",
+            "content-length": "9374",
+            "accept": "*/*",
+            "accept-encoding": "gzip;q=1.0,deflate;q=0.6,identity;q=0.3",
+            "authorization": "Basic VGVzdDp0ZXN0aW5nNTY3OA==",
+            "content-type": "application/json; charset=utf-8",
+            "x-forwarded-for": "10.255.0.2",
+            "x-forwarded-host": "internal.users.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "5f641c71d311",
+            "x-real-ip": "10.255.0.2",
+            "x-zammad-delivery": "95083619-3ec3-4633-b9c7-ee31cfd03192",
+            "x-zammad-trigger": "call internal instance on new ticket"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "ticket": {
+              "article_count": 1,
+              "article_ids": [
+                147314,
+                147313
+              ],
+              "case_identifier": "",
+              "category": "",
+              "checklist_id": null,
+              "close_at": null,
+              "close_diff_in_min": null,
+              "close_escalation_at": null,
+              "close_in_min": null,
+              "create_article_sender": "Customer",
+              "create_article_sender_id": 2,
+              "create_article_type": "email",
+              "create_article_type_id": 1,
+              "created_at": "2025-05-22T13:45:48.972Z",
+              "created_by": {
+                "active": true,
+                "address": "",
+                "city": "",
+                "country": "",
+                "created_at": "2022-07-05T15:13:07.825Z",
+                "created_by": "thomas@thomasmartens.eu",
+                "created_by_id": 8,
+                "department": "",
+                "email": "thomas@thomasmartens.eu",
+                "fax": "",
+                "firstname": "Thomas",
+                "id": 8,
+                "image": "a1cc3073429f2a9a28dbe97b35d71eef",
+                "image_source": null,
+                "lastname": "Martens",
+                "login": "thomas@thomasmartens.eu",
+                "mobile": "",
+                "note": "",
+                "organization": "Tom's Awesome Org",
+                "organization_id": 3,
+                "organization_ids": [],
+                "organizations": [],
+                "out_of_office": false,
+                "out_of_office_end_at": null,
+                "out_of_office_replacement_id": null,
+                "out_of_office_start_at": null,
+                "overview_sorting_ids": [],
+                "overview_sortings": [],
+                "phone": "",
+                "role_ids": [
+                  3
+                ],
+                "roles": [
+                  "Customer"
+                ],
+                "source": null,
+                "street": "",
+                "supportcontract": "standard",
+                "timezone": null,
+                "two_factor_preference_ids": [],
+                "two_factor_preferences": [],
+                "updated_at": "2025-05-22T13:45:48.982Z",
+                "updated_by": "tom@n8n.io",
+                "updated_by_id": 3,
+                "verified": true,
+                "vip": true,
+                "web": "",
+                "zip": ""
+              },
+              "created_by_id": 8,
+              "customer": {
+                "active": true,
+                "address": "",
+                "city": "",
+                "country": "",
+                "created_at": "2022-07-05T15:13:07.825Z",
+                "created_by": "thomas@thomasmartens.eu",
+                "created_by_id": 8,
+                "department": "",
+                "email": " tom+auto20-test20250522-001@n8n.io",
+                "fax": "",
+                "firstname": "Thomas",
+                "id": 8,
+                "image": "a1cc3073429f2a9a28dbe97b35d71eef",
+                "image_source": null,
+                "lastname": "Martens",
+                "login": "thomas@thomasmartens.eu",
+                "mobile": "",
+                "note": "",
+                "organization": "Tom's Awesome Org",
+                "organization_id": 3,
+                "organization_ids": [],
+                "organizations": [],
+                "out_of_office": false,
+                "out_of_office_end_at": null,
+                "out_of_office_replacement_id": null,
+                "out_of_office_start_at": null,
+                "overview_sorting_ids": [],
+                "overview_sortings": [],
+                "phone": "",
+                "role_ids": [
+                  3
+                ],
+                "roles": [
+                  "Customer"
+                ],
+                "source": null,
+                "street": "",
+                "supportcontract": "standard",
+                "timezone": null,
+                "two_factor_preference_ids": [],
+                "two_factor_preferences": [],
+                "updated_at": "2025-05-22T13:45:48.982Z",
+                "updated_by": "tom@n8n.io",
+                "updated_by_id": 3,
+                "verified": true,
+                "vip": true,
+                "web": "",
+                "zip": ""
+              },
+              "customer_id": 8,
+              "customer_ticket_state": "open",
+              "escalation_at": "2025-05-23T08:45:49.000Z",
+              "first_response_at": null,
+              "first_response_diff_in_min": null,
+              "first_response_escalation_at": "2025-05-23T08:45:49.000Z",
+              "first_response_in_min": null,
+              "group": {
+                "active": true,
+                "assignment_timeout": null,
+                "created_at": "2022-07-05T14:57:29.898Z",
+                "created_by": "tom@n8n.io",
+                "created_by_id": 3,
+                "email_address": "n8n Support",
+                "email_address_id": 1,
+                "follow_up_assignment": true,
+                "follow_up_possible": "new_ticket_after_certain_time",
+                "id": 2,
+                "name": "Support",
+                "name_last": "Support",
+                "note": "Standard group for support requests",
+                "parent_id": null,
+                "reopen_time_in_days": 14,
+                "shared_drafts": true,
+                "signature": "Support (2025)",
+                "signature_id": 4,
+                "updated_at": "2025-05-22T08:17:00.929Z",
+                "updated_by": "gualter@n8n.io",
+                "updated_by_id": 6789,
+                "user_ids": [
+                  4814,
+                  11,
+                  35,
+                  8,
+                  9,
+                  757
+                ],
+                "users": [
+                  "medic@n8n.io",
+                  "marcus@n8n.io",
+                  "accounts@n8n.io",
+                  "thomas@thomasmartens.eu",
+                  "jonathan@n8n.io",
+                  "niklas@n8n.io"
+                ]
+              },
+              "group_id": 2,
+              "id": 21335,
+              "last_assigned_at": null,
+              "last_close_at": null,
+              "last_contact_agent_at": null,
+              "last_contact_at": "2025-05-22T13:45:48.987Z",
+              "last_contact_customer_at": "2025-05-22T13:45:48.987Z",
+              "last_owner_update_at": null,
+              "linear": "",
+              "note": null,
+              "number": "7621328",
+              "organization": {
+                "active": false,
+                "contact_email": "",
+                "created_at": "2023-04-13T07:25:04.676Z",
+                "created_by": "tom@n8n.io",
+                "created_by_id": 3,
+                "customer_identifier": null,
+                "domain": "thomasmartens.eu",
+                "domain_assignment": true,
+                "id": 3,
+                "license_type": "",
+                "member_ids": [
+                  8
+                ],
+                "members": [
+                  "thomas@thomasmartens.eu"
+                ],
+                "name": "Tom's Awesome Org",
+                "note": "",
+                "secondary_member_ids": [],
+                "shared": true,
+                "support_plan": null,
+                "support_region": null,
+                "updated_at": "2025-05-22T13:45:48.983Z",
+                "updated_by": "ria@n8n.io",
+                "updated_by_id": 4093,
+                "vip": false
+              },
+              "organization_id": 3,
+              "owner": {
+                "active": false,
+                "address": "",
+                "city": "",
+                "country": "",
+                "created_at": "2022-06-20T06:50:43.595Z",
+                "created_by": "-",
+                "created_by_id": 1,
+                "department": "",
+                "email": "",
+                "fax": "",
+                "firstname": "-",
+                "id": 1,
+                "image": null,
+                "image_source": null,
+                "lastname": "",
+                "login": "-",
+                "mobile": "",
+                "note": "",
+                "organization_id": null,
+                "organization_ids": [],
+                "organizations": [],
+                "out_of_office": false,
+                "out_of_office_end_at": null,
+                "out_of_office_replacement_id": null,
+                "out_of_office_start_at": null,
+                "overview_sorting_ids": [],
+                "overview_sortings": [],
+                "phone": "",
+                "role_ids": [],
+                "roles": [],
+                "source": null,
+                "street": "",
+                "supportcontract": null,
+                "timezone": null,
+                "two_factor_preference_ids": [],
+                "two_factor_preferences": [],
+                "updated_at": "2022-06-20T06:50:43.595Z",
+                "updated_by": "-",
+                "updated_by_id": 1,
+                "verified": false,
+                "vip": false,
+                "web": "",
+                "zip": ""
+              },
+              "owner_id": 1,
+              "pending_time": null,
+              "preferences": {
+                "channel_id": 3,
+                "escalation_calculation": {
+                  "last_update_at": "2025-05-22T13:45:48.987Z",
+                  "last_contact_at": "2025-05-22T13:45:48.987Z",
+                  "sla_id": 4,
+                  "sla_updated_at": "2025-02-11T10:44:24.042Z",
+                  "calendar_id": 2,
+                  "calendar_updated_at": "2025-05-21T15:00:35.140Z",
+                  "escalation_disabled": false
+                }
+              },
+              "priority": {
+                "active": true,
+                "created_at": "2022-06-20T06:50:44.658Z",
+                "created_by": "-",
+                "created_by_id": 1,
+                "default_create": true,
+                "id": 2,
+                "name": "2 normal",
+                "note": null,
+                "ui_color": null,
+                "ui_icon": null,
+                "updated_at": "2022-06-20T06:50:44.658Z",
+                "updated_by": "-",
+                "updated_by_id": 1
+              },
+              "priority_id": 2,
+              "referencing_checklist_ids": [],
+              "referencing_checklists": [],
+              "requested_priority": "medium",
+              "state": "new",
+              "state_id": 1,
+              "ticket_time_accounting": [],
+              "ticket_time_accounting_ids": [],
+              "tier": "2",
+              "time_unit": null,
+              "title": "Test request from non-cloud/Paddle user",
+              "type": null,
+              "update_diff_in_min": null,
+              "update_escalation_at": "2025-05-27T07:45:49.000Z",
+              "update_in_min": null,
+              "updated_at": "2025-05-22T13:45:53.595Z",
+              "updated_by": {
+                "active": false,
+                "address": "",
+                "city": "",
+                "country": "",
+                "created_at": "2022-06-20T06:50:43.595Z",
+                "created_by": "-",
+                "created_by_id": 1,
+                "department": "",
+                "email": "",
+                "fax": "",
+                "firstname": "-",
+                "id": 1,
+                "image": null,
+                "image_source": null,
+                "lastname": "",
+                "login": "-",
+                "mobile": "",
+                "note": "",
+                "organization_id": null,
+                "organization_ids": [],
+                "organizations": [],
+                "out_of_office": false,
+                "out_of_office_end_at": null,
+                "out_of_office_replacement_id": null,
+                "out_of_office_start_at": null,
+                "overview_sorting_ids": [],
+                "overview_sortings": [],
+                "phone": "",
+                "role_ids": [],
+                "roles": [],
+                "source": null,
+                "street": "",
+                "supportcontract": null,
+                "timezone": null,
+                "two_factor_preference_ids": [],
+                "two_factor_preferences": [],
+                "updated_at": "2022-06-20T06:50:43.595Z",
+                "updated_by": "-",
+                "updated_by_id": 1,
+                "verified": false,
+                "vip": false,
+                "web": "",
+                "zip": ""
+              },
+              "updated_by_id": 1
+            },
+            "article": {
+              "attachments": [],
+              "body": "Please close me\n\nSent from my iPhone\n",
+              "cc": null,
+              "content_type": "text/plain",
+              "created_at": "2025-05-22T13:45:48.987Z",
+              "created_by": {
+                "active": true,
+                "address": "",
+                "city": "",
+                "country": "",
+                "created_at": "2022-07-05T15:13:07.825Z",
+                "created_by": "thomas@thomasmartens.eu",
+                "created_by_id": 8,
+                "department": "",
+                "email": "thomas@thomasmartens.eu",
+                "fax": "",
+                "firstname": "Thomas",
+                "id": 8,
+                "image": "a1cc3073429f2a9a28dbe97b35d71eef",
+                "image_source": null,
+                "lastname": "Martens",
+                "login": "thomas@thomasmartens.eu",
+                "mobile": "",
+                "note": "",
+                "organization": "Tom's Awesome Org",
+                "organization_id": 3,
+                "organization_ids": [],
+                "organizations": [],
+                "out_of_office": false,
+                "out_of_office_end_at": null,
+                "out_of_office_replacement_id": null,
+                "out_of_office_start_at": null,
+                "overview_sorting_ids": [],
+                "overview_sortings": [],
+                "phone": "",
+                "role_ids": [
+                  3
+                ],
+                "roles": [
+                  "Customer"
+                ],
+                "source": null,
+                "street": "",
+                "supportcontract": "standard",
+                "timezone": null,
+                "two_factor_preference_ids": [],
+                "two_factor_preferences": [],
+                "updated_at": "2025-05-22T13:45:48.982Z",
+                "updated_by": "tom@n8n.io",
+                "updated_by_id": 3,
+                "verified": true,
+                "vip": true,
+                "web": "",
+                "zip": ""
+              },
+              "created_by_id": 8,
+              "detected_language": null,
+              "from": "Thomas Martens <thomas@thomasmartens.eu>",
+              "id": 147313,
+              "in_reply_to": null,
+              "internal": false,
+              "message_id": "<A4A20791-90C6-4EF2-B5DB-3AC2223B2122@thomasmartens.eu>",
+              "message_id_md5": "37c578973e31b76bc44866146af6300c",
+              "origin_by_id": null,
+              "preferences": {
+                "send-auto-response": true,
+                "is-auto-response": false
+              },
+              "reply_to": null,
+              "sender": "Customer",
+              "sender_id": 2,
+              "subject": "Test request from non-cloud/Paddle user",
+              "ticket_id": 21337,
+              "time_unit": null,
+              "to": "n8n Support <help@n8n.io>",
+              "type": "email",
+              "type_id": 1,
+              "updated_at": "2025-05-22T13:45:48.987Z",
+              "updated_by": {
+                "active": true,
+                "address": "",
+                "city": "",
+                "country": "",
+                "created_at": "2022-07-05T15:13:07.825Z",
+                "created_by": "thomas@thomasmartens.eu",
+                "created_by_id": 8,
+                "department": "",
+                "email": "thomas@thomasmartens.eu",
+                "fax": "",
+                "firstname": "Thomas",
+                "id": 8,
+                "image": "a1cc3073429f2a9a28dbe97b35d71eef",
+                "image_source": null,
+                "lastname": "Martens",
+                "login": "thomas@thomasmartens.eu",
+                "mobile": "",
+                "note": "",
+                "organization": "Tom's Awesome Org",
+                "organization_id": 3,
+                "organization_ids": [],
+                "organizations": [],
+                "out_of_office": false,
+                "out_of_office_end_at": null,
+                "out_of_office_replacement_id": null,
+                "out_of_office_start_at": null,
+                "overview_sorting_ids": [],
+                "overview_sortings": [],
+                "phone": "",
+                "role_ids": [
+                  3
+                ],
+                "roles": [
+                  "Customer"
+                ],
+                "source": null,
+                "street": "",
+                "supportcontract": "standard",
+                "timezone": null,
+                "two_factor_preference_ids": [],
+                "two_factor_preferences": [],
+                "updated_at": "2025-05-22T13:45:48.982Z",
+                "updated_by": "tom@n8n.io",
+                "updated_by_id": 3,
+                "verified": true,
+                "vip": true,
+                "web": "",
+                "zip": ""
+              },
+              "updated_by_id": 8,
+              "accounted_time": 0
+            }
+          },
+          "webhookUrl": "https://internal.users.n8n.cloud/webhook/ce9476fb-2166-4996-b186-d7696e016b26",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "versionId": "0af919c1-bf1f-4b3b-b3be-458f59894382",
+  "triggerCount": 0,
+  "tags": []
+}
