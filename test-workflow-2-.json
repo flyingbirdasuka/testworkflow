@@ -1,0 +1,616 @@
+{
+  "createdAt": "2025-05-15T07:03:58.205Z",
+  "updatedAt": "2025-05-15T10:06:10.000Z",
+  "id": "Kxk78NIRgEM5acu8",
+  "name": "Test workflow 2",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1340,
+        760
+      ],
+      "id": "259b8278-86ee-4cb7-b19f-5071924af806",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "// In a Code node, create an array of objects named myContacts that contains the properties name and email, and the email property is further split into personal and work.\n\nvar myContacts = [\n  {\n    json:{\n      \"name\": \"momo\",\n      \"email\":{\n        \"personal\":\"momo@gmail.com\",\n        \"work\":\"momo@work.com\"\n      }\n    },\n  },\n  {json:{\n      \"name\": \"nana\",\n      \"email\":{\n        \"personal\":\"nana@gmail.com\",\n        \"work\":\"nana@work.com\"\n      }\n    }\n  }\n]\n\n\nreturn myContacts;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        80
+      ],
+      "id": "79eee2a0-e20d-4318-b1fe-aca6b1bab26a",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// write code to create a new column named workEmail that references the work email of the first contact.\nreturn $input.item.json.map(item => {\n    return {\n        json: item\n    }\n});\n\n// let items = $input.all();\n// items[0].json.workEmail = items[0].json.email['work'];\n// return items;\n\n// const items = $input.all();\n// const updatedItems = items.map((item) => {\n//   item.json.workEmail = item.json.email.work;\n//   return item;\n// });\n// return updatedItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        80
+      ],
+      "id": "0157c05d-ea6b-4892-ad6c-989fa96fead0",
+      "name": "Code1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "https://pokeapi.co/api/v2/pokemon",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        160,
+        -100
+      ],
+      "id": "d76a10e3-44f0-4a7e-97b6-395fb0c35688",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -340
+      ],
+      "id": "713cd974-4a78-4877-a219-404e23ef5abf",
+      "name": "Split Out",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// return $input.first().json.results\n\n\nlet items = $input.all();\nreturn items[0].json.results.map(item => {\n\treturn {\n\t\tjson: item\n\t}\n});\n// console.log(results)"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        -220
+      ],
+      "id": "3119fe9b-fe19-4ceb-924d-ea297fa5bb6a",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "url": "https://blog.n8n.io/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -300,
+        -300
+      ],
+      "id": "4741b2c4-43b8-47f8-ae54-bbd9d58d052a",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "cssSelector": ".item-title a",
+              "returnValue": "html"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        -300
+      ],
+      "id": "2ce7f895-003b-4945-9a18-074a92c7ef73",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "mode": "jsonToxml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.xml",
+      "typeVersion": 1,
+      "position": [
+        380,
+        -100
+      ],
+      "id": "5ab953a0-df15-4c3e-991a-356831e88f78",
+      "name": "XML"
+    },
+    {
+      "parameters": {
+        "operation": "getAllPeople",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.n8nTrainingCustomerDatastore",
+      "typeVersion": 1,
+      "position": [
+        -920,
+        380
+      ],
+      "id": "4db09218-e522-43dd-b037-40c548e74f43",
+      "name": "Customer Datastore (n8n training)"
+    },
+    {
+      "parameters": {
+        "operation": "roundDate",
+        "date": "={{ $json.created }}",
+        "mode": "roundUp",
+        "outputFieldName": "new-date",
+        "options": {
+          "includeInputFields": true
+        }
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        360
+      ],
+      "id": "4b227b34-cfc5-42e3-9274-cd44762631fd",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "688decfc-c3b7-4aff-baf7-f791fae6f60e",
+              "leftValue": "={{ $json['new-date'] }}",
+              "rightValue": "1960-01-01T00:00:00",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        180,
+        360
+      ],
+      "id": "da69da15-0360-43a3-9be7-4501e8ec6bf5",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        260
+      ],
+      "id": "450b275e-b91d-4b81-ac05-24e9d1aceaa7",
+      "name": "Wait",
+      "webhookId": "dde41dfc-06a7-451c-b292-0640f199fdc7"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "408c33a9-13ea-437d-8a93-6f1b7a080e0b",
+              "name": "outputValue",
+              "value": "={{ $json['new-date'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        620,
+        260
+      ],
+      "id": "5285b309-182c-4b9b-80ff-cc0608e5d58f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "https://media.kaspersky.com/pdf/Kaspersky_Lab_Whitepaper_Anti_blocker.pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -360,
+        540
+      ],
+      "id": "a86eaab4-8e71-4411-afe8-9053b04e7c01",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        420
+      ],
+      "id": "850959fd-1727-4e82-8c05-730aafad7a97",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "url": "https://poetrydb.org/random/1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -380,
+        760
+      ],
+      "id": "5780146d-14c4-4ee7-95a3-3d6bc98a44d6",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        760
+      ],
+      "id": "4977fadb-7a74-47de-aacd-f43848330524",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "my_file.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        60,
+        760
+      ],
+      "id": "ca2494a0-2826-4883-b233-7ece23dc8f01",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "fileSelector": "my_file.json",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        280,
+        760
+      ],
+      "id": "a4f30c07-47fb-4a7d-9e80-b3709be633f5",
+      "name": "Read/Write Files from Disk1"
+    },
+    {
+      "parameters": {
+        "jsCode": "var people = [\n  {\n    json: {\n      \"name\": \"Edmund Pevensie\",\n      \"language\": \"English\",\n      \"country\" :{\n        \"code\": \"UK\",\n        \"name\": \"United Kingdom\"\n      }\n    }\n  },\n    {\n    json: {\n      \"name\": \"Jay Gatsby\",\n      \"language\": \"English\",\n      \"country\" :{\n        \"code\": \"US\",\n        \"name\" : \"United States\"\n      }\n    }\n  }\n]\n\nreturn people"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -860,
+        540
+      ],
+      "id": "416ba659-89c4-4719-99d2-4845210937f7",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "=",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -660,
+        420
+      ],
+      "id": "e1dbb08a-9ff3-4701-92c8-f57eaf723899",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -760,
+        880
+      ],
+      "id": "06e47d8f-4dcb-4d3d-8f9a-3000430d0c9b",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "let urls = [\n\t{\n\t\tjson: {\n\t\turl: 'https://medium.com/feed/n8n-io'\n\t\t}\n\t},\n\t{\n\tjson: {\n\t\turl: 'https://dev.to/feed/n8n'\n\t\t} \n\t}\n]\nreturn urls;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1040,
+        840
+      ],
+      "id": "59c82eb8-c700-4fb6-858a-fb0279f003b6",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        -400,
+        940
+      ],
+      "id": "78ca080c-086f-4fc3-9c4c-a08843f5544b",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -140,
+        540
+      ],
+      "id": "5bc1875a-e65c-47a6-865d-7609bf5f590c",
+      "name": "Convert to File1"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        []
+      ]
+    },
+    "Code1": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "XML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Datastore (n8n training)": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        []
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        []
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "b75bbe91-706a-4520-926f-9cdbe1e94dd6",
+  "triggerCount": 0,
+  "tags": []
+}
