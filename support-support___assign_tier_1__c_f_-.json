@@ -1,0 +1,1274 @@
+{
+  "createdAt": "2025-06-06T14:23:03.933Z",
+  "updatedAt": "2025-06-06T14:23:03.933Z",
+  "id": "CPpT6RyvSaFp7trN",
+  "name": "Support Support___Assign_Tier_1__C_F_",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Get C&F Unassigned and Triaged Tickets\n- Sort them by escalation_at desc",
+        "height": 620,
+        "width": 680
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -980,
+        640
+      ],
+      "id": "f908f650-5844-419a-a306-c90bc16050ed",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "assets.Ticket",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -700,
+        1000
+      ],
+      "id": "1475b7a3-55aa-4592-a064-f6630a16c904",
+      "name": "Split Out Tickets",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "10908da0-1e19-4ef6-9338-5a600a3243a2",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "60a69cb7-46f1-4fba-8460-647f59855bd7",
+              "name": "number",
+              "value": "={{ $json.number }}",
+              "type": "string"
+            },
+            {
+              "id": "577d7aae-fe81-4a91-bcb1-dd11ef621bac",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "ddfb8ab1-eca4-4a72-8ad0-a5f0b45d2ad3",
+              "name": "created_at",
+              "value": "={{ $json.created_at }}",
+              "type": "string"
+            },
+            {
+              "id": "74c11868-2044-469c-8505-f5613eda9b22",
+              "name": "state_id",
+              "value": "={{ $json.state_id }}",
+              "type": "number"
+            },
+            {
+              "id": "23ad7f37-4900-49f2-bf7d-e317a635172a",
+              "name": "escalation_at",
+              "value": "={{ $json.escalation_at }}",
+              "type": "string"
+            },
+            {
+              "id": "c8c4a037-a1e6-4c99-b3de-2a439425ca56",
+              "name": "category",
+              "value": "={{ $json.category }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -900,
+        780
+      ],
+      "id": "1e716e43-6125-4ab8-b2b8-7a1a7450bd28",
+      "name": "Prepare Data"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "escalation_at"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        780
+      ],
+      "id": "cc81fecb-3d54-483a-877c-f73dcd1314d8",
+      "name": "Sort by escalation_at"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        240,
+        820
+      ],
+      "id": "d25faab6-3f88-4a0c-a2c8-c3fa5c8cfc9f",
+      "name": "Loop Over Tickets"
+    },
+    {
+      "parameters": {
+        "url": "https://support.n8n.io/api/v1/tickets/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "last_assigned_at:<now"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            },
+            {
+              "name": "sort_by",
+              "value": "last_assigned_at"
+            },
+            {
+              "name": "order",
+              "value": "desc"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        1060
+      ],
+      "id": "6672f461-cfd3-4e38-ad91-752189e90b19",
+      "name": "Get Last Assigned Ticket for Cycle",
+      "notesInFlow": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "assets.Ticket",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        1060
+      ],
+      "id": "e1a02f7d-4b2d-4c57-91ed-13c395d7b2f9",
+      "name": "Get Ticket Info for Cycle",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://support.n8n.io/api/v1/tickets/{{ $('Working Ticket').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "owner_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        1580
+      ],
+      "id": "cd8bea93-7b52-4d5d-ac5f-af2394bee98a",
+      "name": "Assign a Ticket to Current Agent"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        540,
+        840
+      ],
+      "id": "c896e7c5-ab9c-492e-be9d-b6672c7674c7",
+      "name": "Working Ticket"
+    },
+    {
+      "parameters": {
+        "url": "https://support.n8n.io/api/v1/tickets/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "(state.name:new OR state.name:open) AND owner_id:1 AND NOT ( tier:\"2\" OR tier:\"tier2\" ) AND NOT category.keyword:\"\""
+            },
+            {
+              "name": "sort_by",
+              "value": "escalation_at"
+            },
+            {
+              "name": "order_by",
+              "value": "asc"
+            },
+            {
+              "name": "per_page",
+              "value": "200"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -900,
+        1000
+      ],
+      "id": "e0b0762e-1c07-4ef4-8617-368c234d6053",
+      "name": "Get Unassigned and Triaged Tickets",
+      "notesInFlow": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "https://support.n8n.io/api/v1/users/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "role_ids:9 AND NOT id:35 AND out_of_office:false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        740,
+        840
+      ],
+      "id": "9677b783-0e8e-4b2e-b049-84d6b20f2eb3",
+      "name": "Get Total Agents",
+      "notesInFlow": true,
+      "notes": "Tier 1 = roleid 9 and not ID 15 (accounts@n8n.io)"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        600,
+        1060
+      ],
+      "id": "01ac3911-0045-4f63-90bc-a6ad070c91df",
+      "name": "Sort Agents by ID"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://support.n8n.io/api/v1/tickets/{{ $('Working Ticket').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "last_assigned_at",
+              "value": "={{ $now }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        1620
+      ],
+      "id": "239a98ec-b63f-4224-a7ce-3b8219028816",
+      "name": "Update Last Assigned At"
+    },
+    {
+      "parameters": {
+        "content": "## Process each ticket and figure out which Agent to assign first\nfor a given ticket:\n- Get Tier 1 Agents\n- Sort them by ID\n- Get Last Assigned Agent\n- Reorder Array to start on the next one in line to guarantee true round robin",
+        "height": 620,
+        "width": 2120,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        600
+      ],
+      "id": "f49c466f-274e-41b4-9e24-8f830124f3b3",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "function reorderArray(arr, id_to_eval) {\n\n  // find index of last assigned agent\n    const index = arr.findIndex(obj => obj.json.id === id_to_eval);\n\n// start new array 1 pos after\n    const newStart = (index + 1) % arr.length; // Move 1 position forward, wrap if needed in case curent index is end of array\n  \n    return [...arr.slice(newStart), ...arr.slice(0, newStart)]; // return new array\n\n}\n\nconst sortedArray = reorderArray($(\"Sort Agents by ID\").all() , $(\"Get Last Assigned Ticket for Cycle\").first().json.owner_id );\n\nreturn sortedArray"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        1060
+      ],
+      "id": "89ed832d-456f-4ea4-a5a8-4afca8c8ef35",
+      "name": "Sort Agents by Last Assigned"
+    },
+    {
+      "parameters": {
+        "content": "## Assign a Ticket\n- For this ticket, we now loop through the sorted array of agents\n- if Agent is full, we skip to the next one and so on\n- if all agents full, **no more tickets should be assigned** and we break the previous loop\n- we throttle API to let change persist since it takes a while (for some weird reason)",
+        "height": 580,
+        "width": 1740
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1260
+      ],
+      "id": "d654f07b-b776-41ed-ac83-5cb17ccaa10e",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const agent = $(\"Sort Agents by Last Assigned\").all().find(agent => agent.json.tickets_count < 20);\n\nreturn agent ? agent : {}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        1320
+      ],
+      "id": "cdea87b5-6f16-4d07-b80e-219fdde6562b",
+      "name": "Get Agent to Assign"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0300ff05-084e-41a1-9f39-2dbf6bfb4b22",
+              "leftValue": "={{ $json.isEmpty() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        460,
+        1560
+      ],
+      "id": "3b53ad5e-37cc-4d27-907c-63d98b22de35",
+      "name": "All Agents Full?"
+    },
+    {
+      "parameters": {
+        "url": "https://support.n8n.io/api/v1/tickets/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=owner_id: {{ $json.id }} AND (state.name:new OR state.name:open OR state.name:escalated)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        720
+      ],
+      "id": "f1eec560-3492-4c33-90e5-6ed853f871fd",
+      "name": "Get Total Assigned Tickets (On Our Side)",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1620,
+        1680
+      ],
+      "id": "d69bc045-9cf5-49df-8bdd-173dc9736a2c",
+      "name": "Throttle API",
+      "webhookId": "c4a88c94-2aae-43b1-84cf-2a33812ba520"
+    },
+    {
+      "parameters": {
+        "content": "## Wrap Up and Notify Slack",
+        "height": 540,
+        "width": 2120,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "459b91f6-5e6c-4b97-b38c-b8934839391e",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0358FN3KP0",
+          "mode": "list",
+          "cachedResultName": "updates-support"
+        },
+        "messageType": "block",
+        "blocksUi": "={\n\t\"attachments\": [\n\t\t{\n\t\t\t\"blocks\": [\n\t\t\t\t{\n\t\t\t\t\t\"fields\": [\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\"text\": \"*Name*\",\n\t\t\t\t\t\t\t\"type\": \"mrkdwn\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\"text\": \"*Total Assigned*\",\n\t\t\t\t\t\t\t\"type\": \"mrkdwn\"\n\t\t\t\t\t\t}\n\t\t\t\t\t],\n\t\t\t\t\t\"type\": \"section\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"type\": \"divider\"\n\t\t\t\t},\n                 {{ JSON.stringify($('Get Agents Total Tickets Assigned').all().filter(agent => agent.json.matchingExecutions > 0 ).map(agent => ({\n\t\t\t\"fields\": [\n\t\t\t\t{\n\t\t\t\t\t\"text\": agent.json.name,\n\t\t\t\t\t\"type\": \"mrkdwn\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"text\": \"<https://support.n8n.io/#search/number:('\"+agent.json.matchingTicketIDs.join('\\'%20OR%20\\'')+\"')|\"+agent.json.matchingExecutions+\" Tickets>\",\n\t\t\t\t\t\"type\": \"mrkdwn\"\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"type\": \"section\"\n\t\t}\n))).slice(1, -1) }}\n\t\t\t]\n\t\t}\n\t]\n}",
+        "text": "=The following *Tier 1 Tickets* were assigned in execution <https://internal.users.n8n.cloud/workflow/Nb0rf5jEMacBQKvz/executions/{{ $execution.id }}|{{ $execution.id }}>",
+        "otherOptions": {
+          "botProfile": {
+            "imageValues": {
+              "profilePhotoType": "emoji",
+              "icon_emoji": ":blob-bot:"
+            }
+          },
+          "sendAsUser": "n8n"
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        1780,
+        40
+      ],
+      "id": "17e5f073-5bc0-4bf2-9750-3354046d6715",
+      "name": "POST to Slack",
+      "webhookId": "9eba8819-b1c3-4f70-a892-78c797e1ddd1",
+      "executeOnce": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        20,
+        340
+      ],
+      "id": "7656f9a9-4c10-45e1-9669-8c4e3cf8c8b3",
+      "name": "Notify"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n  const agents = $(\"Get Total Agents\").all().map(agent => ({ id: agent.json.id, email: agent.json.email, name: agent.json.firstname  }));\n  \n  let final_agents = agents.map(agent => {\n    let matchingExecutions = 0;\n    let matchingTicketIDs = []\n    let executionIndex = 0;\n    \n    while (true) {\n      try {\n        const execs = $items('Throttle API', 0, executionIndex);\n        matchingExecutions += execs.filter(exec => exec.json.owner_id === agent.id).length;\n\n              \n        execs.forEach(exec => {\n        if (exec.json.owner_id === agent.id) {\n          if (exec.json.number) {\n            matchingTicketIDs.push(exec.json.number);\n          }\n        }\n      });\n\n        executionIndex++;\n      } catch (error) {\n        break;\n      }\n    }\n    \n    return { ...agent, matchingExecutions, matchingTicketIDs };\n  });\n\n  return final_agents.sort((a, b) => b.matchingExecutions - a.matchingExecutions);\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        340
+      ],
+      "id": "e649c554-73dd-42d8-bcff-4d9f0c36ffc7",
+      "name": "Get Agents Total Tickets Assigned"
+    },
+    {
+      "parameters": {
+        "keep": "lastItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        360,
+        340
+      ],
+      "id": "80436a80-d4a9-4c9e-8105-893a229515fe",
+      "name": "Get Results from Loop"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7e25a3e8-49b4-4115-9c26-7f5e7d61c68f",
+              "leftValue": "={{ $('Get Agents Total Tickets Assigned').all().filter(item => item.json.matchingExecutions > 0).isEmpty() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        920,
+        200
+      ],
+      "id": "b3c6de21-b001-44c9-8af6-f6ca20dd343a",
+      "name": "No Tickets Assigned?"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "triggerAtMinute": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1280,
+        1000
+      ],
+      "id": "4d08e02c-832d-48fe-b9b9-7558bb612d38",
+      "name": "Every Hour"
+    },
+    {
+      "parameters": {
+        "content": "## Note\nThe Out-Of-Office sync workflow runs at Midnight 00:00\nHence we set this to run shortly after 00:05",
+        "width": 320,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1380,
+        1140
+      ],
+      "typeVersion": 1,
+      "id": "27172f47-fad9-4187-bb7b-fe56aa3f31f9",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        1720,
+        820
+      ],
+      "id": "de856ce8-083d-4765-8fa6-06d8b8d35ea0",
+      "name": "Remove Duplicates"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1500,
+        820
+      ],
+      "id": "ac572730-7c3f-4e39-9b95-e7e11c0d86d5",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8f4af425-fd13-4613-a9bb-fbb2ba9d1e4a",
+              "name": "=id",
+              "value": "={{ $('Get Total Agents').item.json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "06b84791-d3f4-43a1-930d-fb72d7baf774",
+              "name": "tickets_count",
+              "value": "={{ $('Get Total Assigned Tickets (On Our Side)').all().filter(item => item.json.owner_id === $json.owner_id).length; }}",
+              "type": "number"
+            },
+            {
+              "id": "86cc5db7-4ee3-48b3-9d29-e0a1a61d30d1",
+              "name": "email",
+              "value": "={{ $('Get Total Agents').item.json.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1300,
+        720
+      ],
+      "id": "a8dc0934-7157-4ea2-b3bc-2b3db8873519",
+      "name": "Get Agent Details and ticket Count"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e0993a81-e3e6-4f8c-90a8-80e134e9c4c1",
+              "name": "tickets_count",
+              "value": "={{ $json.tickets_count ? $json.tickets_count : 0 }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1940,
+        820
+      ],
+      "id": "62b6ba19-adda-46a2-80c0-13456d576178",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8f4af425-fd13-4613-a9bb-fbb2ba9d1e4a",
+              "name": "=id",
+              "value": "={{ $('Get Total Agents').item.json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "86cc5db7-4ee3-48b3-9d29-e0a1a61d30d1",
+              "name": "email",
+              "value": "={{ $('Get Total Agents').item.json.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1140,
+        840
+      ],
+      "id": "a6fccd78-5e37-4d43-859c-9038210fb3cc",
+      "name": "Get Initial Agent Details"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a0effa83-9129-407f-8c52-b317122ff5dc",
+              "leftValue": "={{ $json.organization_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -480,
+        1000
+      ],
+      "id": "de13ad16-04c5-4fd9-bf37-d259fb41ab71",
+      "name": "Discard Enterprise",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1200,
+        280
+      ],
+      "id": "544686b5-6892-49d4-9bf3-80dfa50d0b8f",
+      "name": "Loop through Agents"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "projectId": {
+          "__rl": true,
+          "value": "n8n-telemetry",
+          "mode": "list",
+          "cachedResultName": "n8n-telemetry",
+          "cachedResultUrl": "https://console.cloud.google.com/bigquery?project=n8n-telemetry"
+        },
+        "datasetId": {
+          "__rl": true,
+          "value": "support",
+          "mode": "list",
+          "cachedResultName": "support"
+        },
+        "tableId": {
+          "__rl": true,
+          "value": "zammad_ticket_assignments",
+          "mode": "list",
+          "cachedResultName": "zammad_ticket_assignments"
+        },
+        "dataMode": "define",
+        "fieldsUi": {
+          "values": [
+            {
+              "fieldId": "ticket_number_count",
+              "fieldValue": "={{ $json.matchingExecutions }}"
+            },
+            {
+              "fieldId": "owner_id",
+              "fieldValue": "={{ $json.id }}"
+            },
+            {
+              "fieldId": "assigned_at",
+              "fieldValue": "={{ $now }}"
+            },
+            {
+              "fieldId": "tier1",
+              "fieldValue": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleBigQuery",
+      "typeVersion": 2.1,
+      "position": [
+        1780,
+        340
+      ],
+      "id": "1984f9ec-501e-424d-afaf-fba1b6af2d8e",
+      "name": "Insert Stats into BQ"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b77c9727-4f43-4d62-9df7-75b360a03433",
+              "leftValue": "={{ $json.matchingExecutions }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1460,
+        340
+      ],
+      "id": "aeb49aa8-fec2-4f11-bd69-0a6e127592c5",
+      "name": "If tickets assigned"
+    }
+  ],
+  "connections": {
+    "Split Out Tickets": {
+      "main": [
+        [
+          {
+            "node": "Discard Enterprise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Data": {
+      "main": [
+        [
+          {
+            "node": "Sort by escalation_at",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort by escalation_at": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Tickets": {
+      "main": [
+        [
+          {
+            "node": "Notify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Working Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Last Assigned Ticket for Cycle": {
+      "main": [
+        [
+          {
+            "node": "Get Ticket Info for Cycle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ticket Info for Cycle": {
+      "main": [
+        [
+          {
+            "node": "Sort Agents by Last Assigned",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign a Ticket to Current Agent": {
+      "main": [
+        [
+          {
+            "node": "Update Last Assigned At",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Working Ticket": {
+      "main": [
+        [
+          {
+            "node": "Get Total Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Unassigned and Triaged Tickets": {
+      "main": [
+        [
+          {
+            "node": "Split Out Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Total Agents": {
+      "main": [
+        [
+          {
+            "node": "Get Total Assigned Tickets (On Our Side)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Initial Agent Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort Agents by ID": {
+      "main": [
+        [
+          {
+            "node": "Get Last Assigned Ticket for Cycle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Last Assigned At": {
+      "main": [
+        [
+          {
+            "node": "Throttle API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort Agents by Last Assigned": {
+      "main": [
+        [
+          {
+            "node": "Get Agent to Assign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Agent to Assign": {
+      "main": [
+        [
+          {
+            "node": "All Agents Full?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "All Agents Full?": {
+      "main": [
+        [
+          {
+            "node": "Notify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Assign a Ticket to Current Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Total Assigned Tickets (On Our Side)": {
+      "main": [
+        [
+          {
+            "node": "Get Agent Details and ticket Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Throttle API": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify": {
+      "main": [
+        [
+          {
+            "node": "Get Results from Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Agents Total Tickets Assigned": {
+      "main": [
+        [
+          {
+            "node": "No Tickets Assigned?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Results from Loop": {
+      "main": [
+        [
+          {
+            "node": "Get Agents Total Tickets Assigned",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Tickets Assigned?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Loop through Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Get Unassigned and Triaged Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Agent Details and ticket Count": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Sort Agents by ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Initial Agent Details": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Discard Enterprise": {
+      "main": [
+        [
+          {
+            "node": "Prepare Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop through Agents": {
+      "main": [
+        [
+          {
+            "node": "POST to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If tickets assigned",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Stats into BQ": {
+      "main": [
+        [
+          {
+            "node": "Loop through Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If tickets assigned": {
+      "main": [
+        [
+          {
+            "node": "Insert Stats into BQ",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop through Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "Every Hour": [
+      {
+        "json": {
+          "timestamp": "2025-06-02T12:05:04.008+02:00",
+          "Readable date": "June 2nd 2025, 12:05:04 pm",
+          "Readable time": "12:05:04 pm",
+          "Day of week": "Monday",
+          "Year": "2025",
+          "Month": "June",
+          "Day of month": "02",
+          "Hour": "12",
+          "Minute": "05",
+          "Second": "04",
+          "Timezone": "Europe/Berlin (UTC+02:00)"
+        }
+      }
+    ]
+  },
+  "versionId": "93c87307-0a6f-453e-8507-bba007a3f5db",
+  "triggerCount": 0,
+  "tags": []
+}
