@@ -1,0 +1,1006 @@
+{
+  "createdAt": "2025-06-06T14:20:09.847Z",
+  "updatedAt": "2025-06-06T14:20:09.847Z",
+  "id": "oqc5pb68py3nD5OS",
+  "name": "Support Mission Control",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "path": "mission-control",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        380
+      ],
+      "id": "abc9a6dd-52b6-4ef5-bb76-9204e868a747",
+      "name": "Webhook",
+      "webhookId": "3421efd3-3d7c-4d64-babe-b2d49d2d40ae"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -920,
+        220
+      ],
+      "id": "69bff451-3295-4dd5-aea2-2977069480b2",
+      "name": "Respond to Webhook",
+      "notesInFlow": true,
+      "notes": "Load page"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.data }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        460
+      ],
+      "id": "31a628f9-a483-45c6-9102-2b56192201e8",
+      "name": "Respond to Webhook1",
+      "notesInFlow": true,
+      "notes": "Load data"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        660,
+        460
+      ],
+      "id": "361e5bc4-8a0e-48ca-9a13-b535b9243870",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ [] }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -680,
+        760
+      ],
+      "id": "13dfd25f-8695-4272-be03-f97c38664afb",
+      "name": "Respond to Webhook2",
+      "notesInFlow": true,
+      "notes": "No data"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "02987e3d-908e-4500-9118-177c6fd3f38f",
+              "name": "cloud_db.account.created_at",
+              "value": "={{ $json.cloud_db.account.created_at ? DateTime.fromISO($json.cloud_db.account.created_at).toFormat('dd MMM yyyy') : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "0f0b3de2-3d04-4826-a1c4-c0edbc1b8635",
+              "name": "cloud_db.instance.created_at",
+              "value": "={{ $json.cloud_db.instance && $json.cloud_db.instance.created_at ? DateTime.fromISO($json.cloud_db.instance.created_at).toFormat('dd MMM yyyy') : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "02f20cbf-67b2-4026-9375-1daf1fe02280",
+              "name": "cloud_db.instance.status",
+              "value": "={{ $json.cloud_db.instance && $json.cloud_db.instance.status }}",
+              "type": "number"
+            },
+            {
+              "id": "84265e8f-bf05-4a08-a4c6-7a21ffadbf7c",
+              "name": "paddle.subscription.subscription_id",
+              "value": "={{ $json.paddle ? $json.paddle.subscription.subscription_id : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "6f3ff622-3a4d-4313-9c50-5a760e952d91",
+              "name": "paddle.subscription.signup_date",
+              "value": "={{ $json.paddle ? DateTime.fromISO($json.paddle.subscription.signup_date.slice(0,10)).toFormat('dd MMM yyyy') : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "ebdde473-8653-457c-b4f1-714e3fcc722a",
+              "name": "paddle.subscription.state",
+              "value": "={{ $json.paddle ? $json.paddle.subscription.state : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "3b15bc7c-9e19-474c-a7e5-c0fc2aae3a88",
+              "name": "paddle.plan.name",
+              "value": "={{ $json.paddle ? $json.paddle.plan.name : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "b8b4752d-f638-45c1-83aa-03615bba594e",
+              "name": "paddle.plan.billing_type",
+              "value": "={{ $json.paddle ? $json.paddle.plan.billing_type + 'ly' : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "76c57628-c967-4b3a-90a7-d9e6b69f9e8e",
+              "name": "paddle.payment.currency",
+              "value": "={{ $json.paddle && $json.paddle.subscription.last_payment.currency ? $json.paddle.subscription.last_payment.currency : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "33c07a6b-ca73-4799-8915-38d2abda9bd2",
+              "name": "status",
+              "value": "={{ $json.cloud_db.instance ? $json.cloud_db.instance.status == 0 ? 'Offline' : $json.cloud_db.instance.status == 1 ? 'Online' : $json.cloud_db.instance.status == 2 ? 'Pending' : $json.cloud_db.instance.status == 3 ? 'Stopped' : $json.cloud_db.instance.status === null && $json.cloud_db.account.created_at ? 'Deleted' : 'Unknown' : 'Deleted' }}",
+              "type": "string"
+            },
+            {
+              "id": "6fa1b5d3-36b1-4f5d-8094-15fccf223afa",
+              "name": "support",
+              "value": "={{ $json.paddle ? [\n    637228, // n8n cloud Power\n    630084  // Large (legacy plan)\n  ].includes($json.paddle.plan.id) : $json.cloud_db.instance && $json.cloud_db.instance.configuration ?$json.cloud_db.instance.configuration.licenseType == 'enterprise' ? true : false : false }}",
+              "type": "boolean"
+            },
+            {
+              "id": "440ab87f-f810-4073-892f-49a3942e47bc",
+              "name": "trialExtendedBy",
+              "value": "={{ $json.cloud_db.instance && $json.cloud_db.instance.status !== null && $json.cloud_db.instance.created_at && $json.paddle === null ? DateTime.fromISO($json.cloud_db.account.created_at).diff(DateTime.fromISO($json.cloud_db.instance.created_at), ['days']).toObject().days.toInt() : 0 }}\n",
+              "type": "number"
+            },
+            {
+              "id": "29cd1257-1146-4a66-9f13-2b0a1a6a15f4",
+              "name": "trialEnd",
+              "value": "={{ $json.cloud_db.account.created_at ? DateTime.fromISO($json.cloud_db.account.created_at).plus(14, 'day').toFormat('dd MMM yyyy') : '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -680,
+        360
+      ],
+      "id": "f2386053-93e8-4403-957c-b4f14d215413",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "82ecf5dc-4953-42d6-8ea7-1c9d9880903e",
+              "leftValue": "={{ !$json.isEmpty() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -920,
+        540
+      ],
+      "id": "cfd102ad-298a-4b3f-a26c-442bc6353bba",
+      "name": "If account found"
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html data-bs-theme=\"light\">\n  <head>\n    <title>Mission Control</title>\n    <link\n      rel=\"icon\"\n      href=\"data:image/png;base64,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\"\n      type=\"image/png\"\n    />\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css\" \n      rel=\"stylesheet\" integrity=\"sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT\" crossorigin=\"anonymous\">\n    <style>\n      body { font-size: 14px; }\n      .copyable { cursor: copy; }\n    </style>\n    <script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js\" \n      integrity=\"sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO\" crossorigin=\"anonymous\">\n    </script>\n    <script>\n      const search = () => {\n        if (document.getElementById(\"search-input\").value) document.getElementById(\"search-button\").click()\n      };\n      const toggleDarkMode = () => {\n        const doc = document.documentElement;\n        const isDarkMode = doc.getAttribute('data-bs-theme') == \"dark\";\n        if (isDarkMode) {\n          doc.setAttribute('data-bs-theme', 'light');\n        } else {\n          doc.setAttribute('data-bs-theme', 'dark');\n        }\n        localStorage.setItem(\n          \"darkMode\",\n          !isDarkMode\n        );\n      };\n      const setTheme = () => {\n        const doc = document.documentElement;\n        const isDarkMode = localStorage.getItem(\"darkMode\") === \"true\";\n        if (isDarkMode) {\n          doc.setAttribute('data-bs-theme', 'dark');\n        } else {\n          doc.setAttribute('data-bs-theme', 'light');\n        }\n      };\n      const copyText = (element) => {\n        navigator.clipboard.writeText(element.innerText)\n        .then(\n          () => {\n            /* clipboard successfully set */\n            const tooltip = bootstrap.Tooltip.getInstance(element);\n            tooltip.show();\n            setTimeout(() => {\n              tooltip.hide();\n            }, 1000);  // dismiss tooltip after 1 sec\n          },\n          () => {\n            /* ignore if clipboard write failed */\n          },\n        );\n      };\n    </script>\n  </head>\n\n  <body onload=\"search(); setTheme()\">\n    <div class=\"container\">\n      <h1 style=\"text-align: center;\">Mission Control</h1>\n\n      <div class=\"grid\">\n        <div class=\"row\">\n          <div class=\"col col-1 col-lg-4\"></div>\n          <div class=\"col col-9 col-lg-4\">\n            <div class=\"input-group\">\n              <input id=\"search-input\" type=\"text\" class=\"form-control\"\n              placeholder=\"username or email address\"{{ $json.query.q ? ' value=\"'\n              + $json.query.q + '\"' : '' }}>\n              <button\n                id=\"clear-search\"\n                class=\"btn btn-outline-secondary\"\n                type=\"button\"\n              >\n                ✕\n              </button>\n              <button id=\"search-button\" class=\"btn btn-primary\" type=\"button\">\n                Search\n              </button>\n            </div>\n            <sup style=\"margin: -20px 0 10px 10px;\">\n              <span class=\"form-text\">*You can use wildcard %</span>\n            </sup>\n          </div>\n          <div class=\"col col-2 col-lg-4 text-end\">\n            <button id=\"dark-mode-toggle\" class=\"btn btn-secondary\" type=\"button\">\n              🌓\n            </button>\n          </div>\n        </div>\n      </div>\n\n      <div id=\"result\"></div>\n    </div>\n\n    <script>\n        const inputSearch = document.getElementById(\"search-input\");\n        const btnSearch = document.getElementById(\"search-button\");\n\n        document.getElementById(\"clear-search\").addEventListener(\"click\", () => {\n          inputSearch.value = '';\n          inputSearch.focus();\n        });\n\n        document\n          .getElementById(\"dark-mode-toggle\")\n          .addEventListener(\"click\", toggleDarkMode);\n\n        btnSearch.addEventListener(\"click\", () => {\n\n          inputSearch.value = inputSearch.value.trim();\n\n          html =\n      `<div class=\"d-flex justify-content-center\">\n        <div class=\"spinner-border\" role=\"status\" style=\"color: rgb(11, 94, 215);\">\n          <span class=\"visually-hidden\">Loading...</span>\n        </div>\n      </div>`;\n          document.getElementById(\"result\").innerHTML = html;\n          const url = \"/webhook/mission-control\";\n\n          fetch(url, {\n              method: 'POST',\n              headers: {\n                  'Content-Type': 'application/json'\n              },\n              body: JSON.stringify({search: inputSearch.value})\n          })\n          .then(response => {\n              if (response.status == 200) {\n                  return response.json();\n              }\n              else {\n                  return Promise.reject(response)\n              }\n          })\n          .then((data) => {\n            // Handle the response data\n            let html = '';\n            let configuration = '';\n\n      if (!data.length) {\n        html =\n          `<div class=\"grid\">\n            <div class=\"row\">\n              <div class=\"col col-1 col-lg-4\"></div>\n              <div class=\"col col-9 col-lg-4\">\n                <div class=\"alert alert-info text-center\" role=\"alert\">\n                  No account found\n                </div>\n              </div>\n              <div class=\"col col-2 col-lg-4\">\n            </div>\n          </div>`;\n      } else {\n\n        if (data.length > 1) html += `<h5>Total: ${data.length}</h5>`;\n\n        data.forEach((i) => {\n\n      if (i.cloud_db.instance && i.cloud_db.instance.configuration)\n        configuration =\n        `<b>CPU</b>: ${i.cloud_db.instance.configuration.cpu} millicore<br>\n        <b>RAM</b>: ${i.cloud_db.instance.configuration.ram} MiB<br>\n        <b>Volume size</b>: ${i.cloud_db.instance.configuration.volumeSize} MB<br>\n        <b>Concurrency</b>: ${i.cloud_db.instance.configuration.executionConcurrency}<br>\n        <b>Maximum executions</b>: ${i.cloud_db.instance.configuration.maxExecutions} (+10%)<br>\n        <b>Maximum workflows</b>: ${i.cloud_db.instance.configuration.maxActiveWorkflows}<br>\n        <b>Prune executions interval</b>: ${i.cloud_db.plan_spec.pruneExecutionsInterval} hours<br>\n        <b>Prune data max count</b>: ${i.cloud_db.plan_spec.pruneDataMaxCount}<br>\n        <b>Timezone</b>: ${i.cloud_db.instance.configuration.timezone}<br>\n        <b>Task runner</b>: <span ${i.cloud_db.instance.configuration?.instanceFeatureFlags?.taskRunner ? 'class=\"text-success\">✓' : 'class=\"text-danger\">✗'}</span><br>\n        <b>Community nodes</b>: <span ${i.cloud_db.instance.configuration?.communityNodes?.enable ? 'class=\"text-success\">✓' : 'class=\"text-danger\">✗'}</span>\n        <hr>\n        <b>Queue mode</b>: <span ${i.cloud_db.instance.configuration.queueModeEnabled ? 'class=\"text-success\">✓' : 'class=\"text-danger\">✗'}</span><br>\n        <b>Database</b>: ${i.enterprise && i.enterprise.databaseType === 'postgresdb' ? 'PostgreSQL' : 'SQLite'}<br>\n        <b>Plan specs</b>: ${i.cloud_db.plan_spec ? i.cloud_db.plan_spec.displayName : ''}<br>\n        <hr>\n        <b>Cluster</b>: <span onclick=\"copyText(this)\" class=\"copyable text-body-secondary\" data-bs-toggle=\"tooltip\" data-bs-trigger=\"manual\" data-bs-title=\"Copied!\">${i.cloud_db.instance.cluster}</span>`;\n      else configuration = '';\n\n      status_color = i.cloud_db.instance.status == 0 ? 'danger' : i.cloud_db.instance.status == 1 ? 'success' : i.cloud_db.instance.status == 2 ? 'warning' : i.cloud_db.instance.status == 3 ? 'secondary' : 'info';\n\n      executions_usage = i.cloud_db.instance.configuration ? (i.cloud_db.instance.usedLimits.executions * 100 / i.cloud_db.instance.configuration.maxExecutions).toFixed(2) : null;\n      executions_color = executions_usage >= 100 ? 'danger' : executions_usage >= 80 ? 'warning' : 'success';\n      \n      if (i.cloud_db.instance?.configuration) progress_bar = `\n      <div class=\"progress\" role=\"progressbar\" aria-valuenow=\"${executions_usage}\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"height: 3px; margin-top: 5px;\">\n        <div class=\"progress-bar bg-${executions_color}\" style=\"width: ${executions_usage}%\"></div>\n      </div>`;\n      else progress_bar = '';\n          \n      html +=\n      `<div class=\"card\">\n        <div class=\"card-body\">\n          <div class=\"grid\">\n          <div class=\"row\">\n\n            <!-- 1st column -->\n            <div class=\"col-4\">\n              <h5 class=\"card-title\">${i.cloud_db.account.name} ${i.enterprise ? '<span class=\"badge text-bg-secondary\">VIP</span>' : ''}\n                <span class=\"badge text-bg-${status_color}\" style=\"display: inline-block; float: right; text-align: right; padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x/2);\">${i.status ? i.status.toUpperCase() : ''}</span>\n              </h5>\n\n                <!-- Account -->\n                <b>Email</b>: <span onclick=\"copyText(this)\" class=\"copyable text-body-secondary\" data-bs-toggle=\"tooltip\" data-bs-trigger=\"manual\" data-bs-title=\"Copied!\">\n                  ${i.cloud_db.up_users.email}</span> <span ${i.cloud_db.up_users.confirmed ? 'class=\"text-success\">✓' : 'class=\"text-danger\">✗'}</span><br>\n                <b>Name</b>: ${i.cloud_db.up_users.name}<br>\n                <b>Workspace</b>: <span onclick=\"copyText(this)\" class=\"copyable text-body-secondary\" data-bs-toggle=\"tooltip\" data-bs-trigger=\"manual\" data-bs-title=\"Copied!\">\n                  ${i.cloud_db.up_users.username}</span> | <a href=\"https://${i.cloud_db.up_users.username}.app.n8n.cloud\" target=\"_blank\">https://${i.cloud_db.up_users.username}.app.n8n.cloud</a><br>\n                <b>Account created</b>: ${i.cloud_db.account.created_at}<br>\n                <b>Trial end</b>: <span onclick=\"copyText(this)\" class=\"copyable text-body-secondary\" data-bs-toggle=\"tooltip\" data-bs-trigger=\"manual\" data-bs-title=\"Copied!\">${i.trialEnd}</span>\n                  ${i.trialExtendedBy ? ' <span class=\"text-body-tertiary\">(extended by ' + i.trialExtendedBy + ' days)</span>' : ''}<br>\n                <b>Support</b>: <span ${i.support ? 'class=\"text-success\">✓' : 'class=\"text-danger\">✗'}</span><br>\n\n                <!-- Paddle -->\n                <hr>\n                ${i.paddle && i.paddle.subscription && i.paddle.subscription.state ? '' : 'No Paddle subscription<!--'}\n                <b>Subscription</b>: ${i.paddle.subscription.signup_date ? '<a href=\"https://vendors.paddle.com/subscriptions/customers/manage/' + i.paddle.subscription.subscription_id + '\" target=\"_blank\">' : ''}\n                  ${i.paddle.subscription.subscription_id}${i.paddle.subscription.signup_date ? '</a>' : ''} ${i.paddle.subscription.signup_date ? '(since ' + i.paddle.subscription.signup_date + ')': ''}<br>\n                <b>Plan</b>: ${i.paddle.plan.name} ${i.paddle.subscription.signup_date ? '(' + i.paddle.subscription.state + ')' : ''}<br>\n                <b>Plan ID</b>: ${i.paddle.subscription.plan_id}<br>\n                <b>Sign-up date</b>: ${i.paddle.subscription.signup_date ? i.paddle.subscription.signup_date : ''}<br>\n                <b>Payments</b>: ${i.paddle.plan.billing_type} ${i.paddle.subscription.signup_date && i.paddle.payment.currency ? 'in' : ''} ${i.paddle.payment.currency}<br>\n                ${i.paddle && i.paddle.subscription && i.paddle.subscription.state ? '' : '-->'}\n\n                <!-- Cloud DB plan -->\n                ${!i.paddle.subscription.subscription_id || (i.cloud_db.plan_spec && i.paddle.subscription && i.paddle.subscription.plan_id === i.cloud_db.plan_spec.planId) ? '<!--' : ''}\n                <hr>\n                <b>Subscription ID in Cloud DB</b>: ${i.cloud_db.account_billing_data ? i.cloud_db.account_billing_data.subscriptionId : ''}\n                  <span style=\"display: inline-block; float: right;\"><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\" fill=\"orange\" width=\"24\" height=\"24\">\n                    <path d=\"M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7 .2 40.1S486.3 480 472 480L40 480c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8 .2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24l0 112c0 13.3 10.7 24 24 24s24-10.7 24-24l0-112c0-13.3-10.7-24-24-24zm32 224a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z\"/>\n                    </svg>\n                  </span><br>\n                <b>Plan ID in Cloud DB</b>: ${i.cloud_db.plan_spec ? i.cloud_db.plan_spec.planId + ' (' + i.cloud_db.plan_spec.displayName + ')' : ''}<br>\n                ${!i.paddle.subscription.subscription_id || (i.cloud_db.plan_spec && i.paddle.subscription && i.paddle.subscription.plan_id === i.cloud_db.plan_spec.planId) ? '-->' : ''}\n\n                <!-- Instance -->\n                ${i.cloud_db.instance && i.cloud_db.instance.configuration ? '' : '<!--'}\n                <hr>\n                <b>Instance created</b>: ${i.cloud_db.instance ? i.cloud_db.instance?.created_at : ''}\n                ${i.cloud_db.instance && i.cloud_db.instance.configuration && i.cloud_db.instance.status == 1 ? // instance exists and online\n                '<span style=\"display: inline-block; float: right;\">' +\n                  '<a class=\"btn btn-outline-primary btn-sm\" role=\"button\" href=\"https://' + i.cloud_db.up_users.username + '.app.n8n.cloud/cloud/limits\" target=\"_blank\">Limits</a></span>' : ''}<br>\n                <b>Version</b>: ${i.cloud_db.instance && i.cloud_db.instance.configuration ? i.cloud_db.instance.configuration.version.name : ''} ${i.cloud_db.instance && i.cloud_db.instance.configuration && i.cloud_db.instance.configuration.version.isStable ? '(stable)' : ''}<br>\n                <b>Workflows</b>: ${i.cloud_db.instance && i.cloud_db.instance.configuration ? i.cloud_db.instance.usedLimits.activeWorkflows : ''}${i.cloud_db.instance && i.cloud_db.instance.configuration ? ' / ' + i.cloud_db.instance.configuration.maxActiveWorkflows : ''}<br>\n                <b><a href=\"#\" class=\"text-decoration-none\" data-bs-toggle=\"tooltip\" data-bs-html=\"true\" data-bs-title=\"Use <em>limits</em> endpoint to get value up to date\">Executions<sup>ℹ︎</sup></a></b>: \n                  ${i.cloud_db.instance && i.cloud_db.instance.configuration ? i.cloud_db.instance.usedLimits.executions : ''}${i.cloud_db.instance && i.cloud_db.instance.configuration ? ' / ' + i.cloud_db.instance.configuration.maxExecutions : ''}\n                  ${i.cloud_db.instance && i.cloud_db.instance.usedLimits.executions && i.cloud_db.instance.configuration ? ' <span class=\"text-body-tertiary\">(' + (i.cloud_db.instance && i.cloud_db.instance.usedLimits.executions * 100 / i.cloud_db.instance.configuration.maxExecutions).toFixed(2) + '%)</span>' : ''}\n                  ${i.cloud_db.instance && i.cloud_db.instance.configuration && i.cloud_db.instance.usedLimits.isActualUsage ? '<span class=\"badge text-bg-' + executions_color + '\" style=\"cursor: help;\" title=\"Verified usage\">✓</span>' : ''}<br>\n                ${progress_bar}\n                ${i.cloud_db.instance && i.cloud_db.instance.configuration ? '' : '-->'}\n\n            </div>\n\n            <!-- 2nd column -->\n            <div class=\"col-3\" style=\"padding-right: 0\">\n              <div class=\"card\">\n                <h6 class=\"card-header\">Configuration</h6>\n                <div class=\"card-body\" style=\"padding-bottom: 0\">\n                  <p class=\"card-text\">`\n\n      + configuration +\n\n                  `</p>\n                </div>\n\n                <!-- License features -->\n                ${i.cloud_db.instance.configuration ?\n                `<div class=\"card-footer text-center\" style=\"padding: 0;\">\n                  <button class=\"btn btn-link text-decoration-none\" type=\"button\" data-bs-toggle=\"offcanvas\" data-bs-target=\"#offcanvas-${i.cloud_db.account.id}\" aria-controls=\"offcanvas\">\n                    More\n                  </button>\n                </div>\n                \n                <div class=\"offcanvas offcanvas-start\" tabindex=\"-1\" id=\"offcanvas-${i.cloud_db.account.id}\" aria-labelledby=\"offcanvasLabel\">\n                  <div class=\"offcanvas-header\">\n                    <h5 class=\"offcanvas-title\" id=\"offcanvasLabel\">License Features</h5>\n                    <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"offcanvas\" aria-label=\"Close\"></button>\n                  </div>\n                  <div class=\"offcanvas-body\">\n                    <div>\n                      <p>\n                      ${i.enterprise ? \n                        '<b>Instance ID</b>: <span onclick=\"copyText(this)\" class=\"copyable text-body-secondary\" data-bs-toggle=\"tooltip\" data-bs-trigger=\"manual\" data-bs-title=\"Copied!\">' + i.enterprise.instanceId + `</span><br>\n                        <b>Consumer ID</b>: <span onclick=\"copyText(this)\" class=\"copyable text-body-secondary\" data-bs-toggle=\"tooltip\" data-bs-trigger=\"manual\" data-bs-title=\"Copied!\">` + i.enterprise.license.consumerId + '</span><br>' : ''}\n                      </p>\n                      \n                      <pre>${i.enterprise ? JSON.stringify(i.enterprise.enterprise, null, 2) : JSON.stringify(i.cloud_db.instance.configuration.licenseFeatures, null, 2)}</pre>\n                      <p class=\"text-center\"><a class=\"btn btn-outline-primary btn-sm\" role=\"button\" href=\"https://${i.cloud_db.up_users.username}.app.n8n.cloud/rest/settings\" target=\"_blank\">Settings</a></p>\n                    </div>\n                  </div>\n                </div>` : ''}\n              </div>\n            </div>\n\n            <!-- 3rd column -->\n            <div class=\"col-5\">\n              <div class=\"card-group\">\n                <div class=\"card\" style=\"border: 0;\">\n\n                  <!-- Customer -->\n                  <div class=\"card-header text-center\">Customer</div>\n                  <div class=\"card-body\" style=\"padding:5px\">\n                    <div class=\"list-group\">\n                      <a href=\"https://fly.customer.io/workspaces/93474/journeys/people/${i.cloud_db.up_users.id}\" class=\"list-group-item list-group-item-action \" aria-current=\"true\" target=\"_blank\">\n                        <p class=\"mb-1\"><b>Customer.io</b></p>\n                        <small class=\"text-body-secondary\"><i>Marketing and email platform</i></small>\n                      </a>\n                      <a ${i.paddle.subscription.subscription_id ? 'href=\"https://vendors.paddle.com/subscriptions/customers/manage/' + i.paddle.subscription.subscription_id + '\"' : ''} \n                        class=\"list-group-item list-group-item-action${i.paddle.subscription.subscription_id ? '' : ' disabled'}\" target=\"_blank\">\n                        <p class=\"mb-1\"><b>Paddle</b></p>\n                        <small class=\"text-body-secondary\"><i>Subscription details</i></small>\n                      </a>\n                    </div>\n                  </div>\n                </div>\n\n                <!-- Logs and metrics -->\n                <div class=\"card\" style=\"border: 0;\">\n                  <div class=\"card-header text-center\">Logs and metrics</div>\n                  <div class=\"card-body\" style=\"padding:5px\">\n                    <div class=\"list-group\">\n                      <a href=\"https://grafmon.app.n8n.cloud/d/d78942b7-e6a7-40f4-9799-42d89dc393a4/user-instance-monitoring?orgId=1&from=now-2d&to=now&var-user=${i.cloud_db.account.name}\" class=\"list-group-item list-group-item-action${i.cloud_db.instance?.configuration ? '' : ' disabled'}\" aria-current=\"true\" target=\"_blank\">\n                        <p class=\"mb-1\"><b>Workload</b></p>\n                        <small class=\"text-body-secondary\"><i>Grafana</i></small>\n                      </a>\n                      <a href=\"https://grafmon.app.n8n.cloud/d/d78942b7-e6a7-40f4-9799-42d89dc393a4/user-instance-monitoring?orgId=1&from=now-2d&to=now&viewPanel=panel-16&var-user=${i.cloud_db.account.name}\" class=\"list-group-item list-group-item-action${i.cloud_db.instance?.configuration ? '' : ' disabled'}\" target=\"_blank\">\n                        <p class=\"mb-1\"><b>OOM</b></p>\n                        <small class=\"text-body-secondary\"><i>Grafana</i></small>\n                      </a>\n                      <a href=\"\n                      https://grafmon.app.n8n.cloud/d/a967d7ab-d6e9-4106-87b6-6c85df99d269/opensearch-instance-logs-infra-next?orgId=1&from=now-12h&to=now&timezone=browser&var-cluster=${i.cloud_db.instance.cluster}&var-namespace=${i.cloud_db.account.name}\" class=\"list-group-item list-group-item-action${i.cloud_db.instance?.configuration ? '' : ' disabled'}\" target=\"_blank\">\n                        <p class=\"mb-1\"><b>Instance logs</b></p>\n                        <small class=\"text-body-secondary\"><i>Grafana</i></small>\n                      </a>\n                      <a href=\"https://grafmon.app.n8n.cloud/d/d78942b7-e6a7-40f4-9799-42d89dc393a4/user-instance-monitoring?orgId=1&from=now-2d&to=now&viewPanel=panel-9&var-user=${i.cloud_db.account.name}\" class=\"list-group-item list-group-item-action${i.cloud_db.instance?.configuration ? '' : ' disabled'}\" target=\"_blank\">\n                        <p class=\"mb-1\"><b>Access logs</b></p>\n                        <small class=\"text-body-secondary\"><i>Grafana</i></small>\n                      </a>\n                      <a href=\"https://grafmon.app.n8n.cloud/d/a3a1c53c-1e86-472f-89e0-0e9871bc5517/opensearch-http-logs?orgId=1&from=now-7d&to=now&timezone=browser\" class=\"list-group-item list-group-item-action\" target=\"_blank\">\n                        <p class=\"mb-1\"><b>HTTP logs</b> (all workspaces)</p>\n                        <small class=\"text-body-secondary\"><i>Grafana</i></small>\n                      </a>\n                    </div>\n                  </div>\n                </div>\n              </div>\n            </div>\n            </div>\n          </div>\n        </div>\n      </div>\n      <br>`;\n                });\n      }\n            document.getElementById(\"result\").innerHTML = html;\n\n            // Initialize tooltips\n            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle=\"tooltip\"]');\n            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));\n\n          })\n          .catch((error) => {\n            // Handle errors\n            document.getElementById(\"result\").innerHTML = `\n              <div class=\"grid\">\n                <div class=\"row\">\n                  <div class=\"col col-1 col-lg-4\"></div>\n                  <div class=\"col col-9 col-lg-4\">\n                    <div class=\"alert alert-danger text-center\" role=\"alert\">\n                      Error: ${error.message}\n                    </div>\n                  </div>\n                  <div class=\"col col-2 col-lg-4\">\n                </div>\n              </div>`;\n              })\n          });\n\n        inputSearch.addEventListener(\"keypress\", function(event) {\n        if (event.key === \"Enter\") {\n          event.preventDefault();\n          btnSearch.click();\n        }\n      });\n    </script>\n  </body>\n</html>\n"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -1140,
+        220
+      ],
+      "id": "fadfe284-b41d-4abb-9ba6-a686e64192df",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bb898ee0-39f5-4f24-bb68-e97ef1f0b15d",
+              "leftValue": "={{ $json.cloud_db.instance.status }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -680,
+        560
+      ],
+      "id": "25103044-c6d0-4076-9b63-a388979addaa",
+      "name": "If not online",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "705dbe1d-ef5e-41d2-b35f-a34672662563",
+              "name": "cloud_db.instance.usedLimits.executions",
+              "value": "={{ $json.cloud_db.instance && $json.cloud_db.instance.usedLimits ? $json.cloud_db.instance.usedLimits.executions : 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "8afa5085-335d-4716-91e6-1b4f853a7290",
+              "name": "cloud_db.instance.usedLimits.activeWorkflows",
+              "value": "={{ $json.cloud_db.instance && $json.cloud_db.instance.usedLimits ? $json.cloud_db.instance.usedLimits.activeWorkflows : 0}}",
+              "type": "number"
+            },
+            {
+              "id": "37214fa3-547b-413c-8e67-38827f9575d3",
+              "name": "cloud_db.instance.usedLimits.isActualUsage",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "e3493203-3c0b-414c-ba86-86a094ccfb9e",
+              "name": "cloud_db.account.id",
+              "value": "={{ $json.cloud_db.account.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -460,
+        540
+      ],
+      "id": "d61eedaf-be60-4fa8-91eb-64f038baf179",
+      "name": "Cached used limits",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "cloud_db.account.id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -240,
+        320
+      ],
+      "id": "ccbc1357-3959-47f0-a154-11c43584ffff",
+      "name": "Merge",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "cloud_db.account.id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -240,
+        520
+      ],
+      "id": "0e4c407d-1506-4dbe-916d-a0a409d6a181",
+      "name": "Merge1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "cloud_db.account.id",
+        "joinMode": "keepEverything",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        0,
+        460
+      ],
+      "id": "d36abe03-fcde-49a2-9c00-16fbc8d80a23",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5f71ab1f-f85c-4dd3-9dc9-e7c5f70d41b9",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        460
+      ],
+      "id": "e3e958b0-0c0a-4cc6-ad7c-1ffe4ef48bb3",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "cloud_db.up_users.username"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        440,
+        460
+      ],
+      "id": "703cb2f8-46fe-4dbb-832b-70ec2eae2ea5",
+      "name": "Sort"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        220,
+        140
+      ],
+      "id": "d815a311-908d-42a8-bf5e-76e2e67b2847",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "url": "=https://{{ $json.cloud_db.up_users.username }}.app.n8n.cloud/rest/settings",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        80
+      ],
+      "id": "6e72e719-2696-4b5a-b8ce-4b427a93de62",
+      "name": "Get settings",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "705dbe1d-ef5e-41d2-b35f-a34672662563",
+              "name": "cloud_db.instance.usedLimits.executions",
+              "value": "={{ $json.executions }}",
+              "type": "number"
+            },
+            {
+              "id": "8afa5085-335d-4716-91e6-1b4f853a7290",
+              "name": "cloud_db.instance.usedLimits.activeWorkflows",
+              "value": "={{ $json.activeWorkflows }}",
+              "type": "number"
+            },
+            {
+              "id": "a63241be-7b92-4ef8-8936-f208a81082b3",
+              "name": "cloud_db.instance.usedLimits.isActualUsage",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "043079c5-cfce-4291-ad46-f7c06bf27fb1",
+              "name": "cloud_db.account.id",
+              "value": "={{ $('Account ID').item.json.cloud_db.account.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        660
+      ],
+      "id": "a931b1ce-1d19-435f-a02f-eb18d14d4640",
+      "name": "Actual used limits"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "705dbe1d-ef5e-41d2-b35f-a34672662563",
+              "name": "cloud_db.instance.usedLimits.executions",
+              "value": "={{ $('If not online').first(1).json.cloud_db.instance.usedLimits.executions }}",
+              "type": "number"
+            },
+            {
+              "id": "8afa5085-335d-4716-91e6-1b4f853a7290",
+              "name": "cloud_db.instance.usedLimits.activeWorkflows",
+              "value": "={{ $('If not online').first(1).json.cloud_db.instance.usedLimits.activeWorkflows }}",
+              "type": "number"
+            },
+            {
+              "id": "a63241be-7b92-4ef8-8936-f208a81082b3",
+              "name": "cloud_db.instance.usedLimits.isActualUsage",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "fc82033a-8039-449f-98a1-26ee76fb6d33",
+              "name": "cloud_db.account.id",
+              "value": "={{ $('Account ID').item.json.cloud_db.account.id }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        880
+      ],
+      "id": "3669217f-8d05-4c48-805b-c8c7ca09772f",
+      "name": "Fallback used limits"
+    },
+    {
+      "parameters": {
+        "url": "=https://{{ $json.cloud_db.account.name }}.app.n8n.cloud/limits",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        700
+      ],
+      "id": "f8d08265-c600-4893-82ff-a94d5017d1e8",
+      "name": "Get limits",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0db42bab-e2c5-4265-b0f9-2d49fdb58dcb",
+              "leftValue": "={{ $json.cloud_db.instance.configuration.licenseType }}",
+              "rightValue": "enterprise",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -460,
+        220
+      ],
+      "id": "f9a6ea63-b54e-459c-8bf1-c0f7dffbf003",
+      "name": "If enterprise"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        440,
+        220
+      ],
+      "id": "af1ff7c2-66e1-4f80-945b-10d908ae64f2",
+      "name": "Merge5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "621901b0-1d45-4d23-a02e-db036e550629",
+              "name": "enterprise",
+              "value": "={{ $json.data }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0e88ebfd-7f2f-4177-aaaa-5840abff3f72",
+      "name": "Enterprise settings"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b3930e1c-3805-4339-b020-183bae29c919",
+              "name": "cloud_db.account.id",
+              "value": "={{ $json.cloud_db.account.id }}",
+              "type": "number"
+            },
+            {
+              "id": "a7d8b4e0-cddc-49d6-ba22-0feabcd6e68a",
+              "name": "cloud_db.account.name",
+              "value": "={{ $json.cloud_db.account.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -460,
+        700
+      ],
+      "id": "2c26345a-7dfb-442c-bcdc-41de0882e3f2",
+      "name": "Account ID"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "w27TKwynQ4VJuXAS",
+          "mode": "list",
+          "cachedResultName": "Revenue Operations — Workflow Automation | Get cloud user details v2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "user": "={{ $json.body.search }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "user",
+              "displayName": "user",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1140,
+        540
+      ],
+      "id": "d4b5834a-bff8-4ef1-b757-7e9ff7203a1a",
+      "name": "Execute Workflow",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If enterprise",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If account found": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If not online",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If not online": {
+      "main": [
+        [
+          {
+            "node": "Cached used limits",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Account ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cached used limits": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Sort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get settings": {
+      "main": [
+        [
+          {
+            "node": "Enterprise settings",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actual used limits": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Fallback used limits": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get limits": {
+      "main": [
+        [
+          {
+            "node": "Actual used limits",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback used limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If enterprise": {
+      "main": [
+        [
+          {
+            "node": "Get settings",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge5": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enterprise settings": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Account ID": {
+      "main": [
+        [
+          {
+            "node": "Get limits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow": {
+      "main": [
+        [
+          {
+            "node": "If account found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {
+    "Webhook": []
+  },
+  "versionId": "f0d40413-8774-4845-ab41-f9f48979317a",
+  "triggerCount": 0,
+  "tags": [
+    {
+      "createdAt": "2025-06-06T13:31:13.531Z",
+      "updatedAt": "2025-06-06T13:31:13.531Z",
+      "id": "fbWVKyIr4pGbfxDT",
+      "name": "support"
+    }
+  ]
+}
