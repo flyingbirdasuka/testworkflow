@@ -1,0 +1,844 @@
+{
+  "createdAt": "2025-06-06T14:33:58.661Z",
+  "updatedAt": "2025-06-06T14:33:58.661Z",
+  "id": "Q3ihsaJJwh1m9xNC",
+  "name": "Support Support___Fetch_absences_for_date",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# Fetch absences\n\nThis helper workflow fetches absences for our support team members on a given `date` in the format `yyyy-MM-dd`. It will be called by [this parent workflow](https://internal.users.n8n.cloud/workflow/M6QAdAQBbmexAnmO). Responses are normalised.\n\nThe workflow uses two separate data sources:\n\n- Hibob API (reliable but limited - does not report public holidays)\n- Hibob ICS calendar (includes public holiday, but contains raw information and requires mapping employees by name rather than ID)\n\n\nBe aware:\n\n- Hibob generally doesn't specify time zones/offsets for individual timestamps or dates, but mentions UTC in their API documentation\n- Ensure the workflow settings specify the time zone as `Etc/UTC` to account for this",
+        "height": 420,
+        "width": 620
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "234fdcd9-54aa-4994-bfba-d339744e97f0",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "https://api.hibob.com/v1/timeoff/outtoday",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "includeHourly",
+              "value": "true"
+            },
+            {
+              "name": "includePrivate",
+              "value": "true"
+            },
+            {
+              "name": "today",
+              "value": "={{ $json.date }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        500
+      ],
+      "id": "9adc3b48-b01e-417b-8548-0bc8fbd70b0c",
+      "name": "Hibob: /v1/timeoff/outtoday"
+    },
+    {
+      "parameters": {
+        "url": "https://cal.hibob.com/622294/ics/baf20317-494d-4c44-aeee-c164cf46826d",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        900
+      ],
+      "id": "932ea640-3929-48b8-8474-c5c7b05f2ad9",
+      "name": "Hibob: Fetch calendar"
+    },
+    {
+      "parameters": {
+        "jsCode": "function parseICS(icsText) {\n  const events = [];\n  const lines = icsText.split(/\\r?\\n/);\n  let currentEvent = null;\n\n  lines.forEach(line => {\n    if (line === 'BEGIN:VEVENT') {\n      currentEvent = {};\n    } else if (line === 'END:VEVENT') {\n      if (currentEvent) events.push(currentEvent);\n      currentEvent = null;\n    } else if (currentEvent) {\n      // Handle key-value pairs, possibly with parameters (e.g., DTSTART;VALUE=DATE)\n      const [rawKey, ...rawValueParts] = line.split(':');\n      const value = rawValueParts.join(':'); // In case value had ':'\n      const key = rawKey.split(';')[0]; // Strip any parameters\n\n      switch (key) {\n        case 'UID':\n          currentEvent.uid = value;\n          break;\n        case 'SUMMARY':\n          currentEvent.summary = value;\n          break;\n        case 'DESCRIPTION':\n          currentEvent.description = value;\n          break;\n        case 'DTSTART':\n          currentEvent.start = value;\n          break;\n        case 'DTEND':\n          currentEvent.end = value;\n          break;\n        case 'CATEGORIES':\n          currentEvent.category = value;\n          break;\n        case 'X-BOB-REQUEST-ID':\n          currentEvent.requestId = value;\n          break;\n        // You can add more fields if needed\n      }\n    }\n  });\n\n  return events;\n}\n\nconst icsData = parseICS($input.first().json.data);\n\nreturn icsData.map(e => {\n  return {\n    json: e\n  }\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        900
+      ],
+      "id": "f460b90b-c82d-4dcc-b7c0-5a97f968cdb1",
+      "name": "Parse ICS"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "072dc9c1-584a-452c-b3c5-064728a1cef7",
+              "leftValue": "={{ $json.requestId }}",
+              "rightValue": "leave",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        900
+      ],
+      "id": "14197d66-a26c-45c9-9d05-86f824e13219",
+      "name": "Remove requested absences"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "employees",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        880,
+        700
+      ],
+      "id": "a63e0e28-f90b-4600-a5ee-c2f2a1654286",
+      "name": "Split out employees"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hibob.com/v1/people/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "={{ [\"root.id\", \"root.displayName\", \"root.email\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        700
+      ],
+      "id": "06ac0bfc-b0d6-4b32-adfd-2f49280bbc2f",
+      "name": "Hibob: /people/search"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "hibob_display_name",
+              "field2": "display_name"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1320,
+        860
+      ],
+      "id": "01be0bfb-54d5-4cd0-af10-49af82acdd97",
+      "name": "Merge employee + calendar data",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1e4f18f1-f4f6-471b-afbf-f02e4d60fa75",
+              "name": "hibob_employee_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "bb089b89-13d2-4821-b7f1-0f13d6d379e2",
+              "name": "hibob_display_name",
+              "value": "={{ $json.displayName }}",
+              "type": "string"
+            },
+            {
+              "id": "785b47ef-8286-43fe-925d-7afe1b4b0342",
+              "name": "hibob_employee_email",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        700
+      ],
+      "id": "d7fe981e-c0cb-4aeb-8c2e-ec38decb5b8c",
+      "name": "Parse employee data"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cbc7e125-b0df-402a-86fa-09c63e03c882",
+              "name": "display_name",
+              "value": "={{ $json.summary.split(\" - \")[1] }}",
+              "type": "string"
+            },
+            {
+              "id": "8eab4ae5-eded-4285-b3a9-f0ea336a5e9f",
+              "name": "start",
+              "value": "={{ DateTime.fromFormat($json.start, 'yyyyMMdd').format('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "fca965cb-f91f-40af-8e30-fd6da548ffad",
+              "name": "start_portion",
+              "value": "all_day",
+              "type": "string"
+            },
+            {
+              "id": "b4bf5f2b-68d9-4906-8a4a-6feb8d34d830",
+              "name": "end",
+              "value": "={{ DateTime.fromFormat($json.end, 'yyyyMMdd').minus({ days: 1 }).format('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "c6cf2411-889b-4666-aa45-07fdec2406df",
+              "name": "end_portion",
+              "value": "all_day",
+              "type": "string"
+            },
+            {
+              "id": "62c6289e-292f-4a13-a400-f780ea07689a",
+              "name": "description",
+              "value": "={{ $json.summary.split(\" - \")[0] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        900
+      ],
+      "id": "0f464c05-1865-4feb-b7ea-744ee8e187c4",
+      "name": "Parse calendar data"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cbc7e125-b0df-402a-86fa-09c63e03c882",
+              "name": "display_name",
+              "value": "={{ $json.employeeDisplayName }}",
+              "type": "string"
+            },
+            {
+              "id": "8eab4ae5-eded-4285-b3a9-f0ea336a5e9f",
+              "name": "start",
+              "value": "={{ $json.startDate }}",
+              "type": "string"
+            },
+            {
+              "id": "da89970c-09fc-4148-b4f2-22c4645c3801",
+              "name": "start_portion",
+              "value": "={{ $json.startDatePortion }}",
+              "type": "string"
+            },
+            {
+              "id": "b4bf5f2b-68d9-4906-8a4a-6feb8d34d830",
+              "name": "end",
+              "value": "={{ $json.endDate }}",
+              "type": "string"
+            },
+            {
+              "id": "6a9e6d18-9100-45b5-a6a0-de40fc7e2745",
+              "name": "end_portion",
+              "value": "={{ $json.endDatePortion }}",
+              "type": "string"
+            },
+            {
+              "id": "62c6289e-292f-4a13-a400-f780ea07689a",
+              "name": "description",
+              "value": "={{ $json.policyTypeDisplayName }}",
+              "type": "string"
+            },
+            {
+              "id": "0805f940-ef52-4540-b41d-052504e850cd",
+              "name": "hibob_employee_id",
+              "value": "={{ $json.employeeId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        500
+      ],
+      "id": "517a7935-b354-490c-823f-f30a5d8abdcc",
+      "name": "Parse timeoff data"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "body.outs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        880,
+        500
+      ],
+      "id": "3c2f5f8c-b31b-4081-a8f8-e16ab5925908",
+      "name": "Split out timeoffs"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "56c4a030-0f5d-4702-9018-43d3ee673d8c",
+              "leftValue": "={{ DateTime.fromISO($json.start) }}",
+              "rightValue": "={{ DateTime.fromISO($('Start').first().json.date) }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "beforeOrEquals"
+              }
+            },
+            {
+              "id": "ee78d0de-738d-4095-818c-10dc14aa97e7",
+              "leftValue": "={{ DateTime.fromISO($json.end) }}",
+              "rightValue": "={{ DateTime.fromISO($('Start').first().json.date) }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "afterOrEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        860
+      ],
+      "id": "cb7e7bc9-3e52-49a3-b669-8b17302a816f",
+      "name": "Remove out of date range absences",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "hibob_employee_id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1320,
+        560
+      ],
+      "id": "03a9e057-5429-4579-8596-871bccdc1368",
+      "name": "Merge employee + API data",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1760,
+        700
+      ],
+      "id": "0cbf74de-033d-46e1-89d4-121f3f630aa4",
+      "name": "Combine results"
+    },
+    {
+      "parameters": {
+        "path": "019f3161-3e75-4b67-80ee-3c09c1aa7ec9",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        600
+      ],
+      "id": "6efa5bfd-06c0-48c4-aa5e-9cbf6da4d166",
+      "name": "GET /019f3161-3e75-4b67-80ee-3c09c1aa7ec9",
+      "webhookId": "019f3161-3e75-4b67-80ee-3c09c1aa7ec9"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "039fea74-ff98-466b-a9de-20a96126a618",
+              "name": "date",
+              "value": "={{ $json.query.date || $today.format('yyyy-MM-dd') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        600
+      ],
+      "id": "bc2a10f2-d154-4665-8a7a-92ce587aa435",
+      "name": "Prepare date"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "date"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        800
+      ],
+      "id": "2eb85952-69e7-4088-84e4-9ff899a27117",
+      "name": "Sub-workflow entrypoint"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        220,
+        700
+      ],
+      "id": "cbc47044-521d-4ddd-8439-378cc8babffc",
+      "name": "Start"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2373b795-6628-40e0-b6ee-1975a1c90be9",
+              "leftValue": "={{ $input.all().filter(item => Object.keys(item.json).length > 0).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        700
+      ],
+      "id": "cd8619f6-4862-4838-a4f1-4bc471e5627a",
+      "name": "Has at least one property?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e41a0adb-1ed8-45f5-b663-09091bed4f2d",
+              "leftValue": "={{ Object.keys($json).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        2200,
+        600
+      ],
+      "id": "14c82206-e2de-4904-b4d9-e6cce525654d",
+      "name": "Remove dummy obects"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.3,
+      "position": [
+        2420,
+        600
+      ],
+      "id": "9b30d8c8-b940-4b2f-956f-119f51de030a",
+      "name": "Respond with absences"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.3,
+      "position": [
+        2200,
+        800
+      ],
+      "id": "637952f0-38da-480c-b5ad-7575b1355f04",
+      "name": "Respond with empty list"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        800
+      ],
+      "id": "325671a0-8d48-4cec-9888-be27113a152f",
+      "name": "Empty sub-workflow response"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        600
+      ],
+      "id": "6fc32c8b-2ca9-4ba8-8571-4dc6f13e1335",
+      "name": "Absence sub-workflow response"
+    }
+  ],
+  "connections": {
+    "Hibob: Fetch calendar": {
+      "main": [
+        [
+          {
+            "node": "Parse ICS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse ICS": {
+      "main": [
+        [
+          {
+            "node": "Remove requested absences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hibob: /people/search": {
+      "main": [
+        [
+          {
+            "node": "Split out employees",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove requested absences": {
+      "main": [
+        [
+          {
+            "node": "Parse calendar data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split out employees": {
+      "main": [
+        [
+          {
+            "node": "Parse employee data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse employee data": {
+      "main": [
+        [
+          {
+            "node": "Merge employee + calendar data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge employee + API data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Parse calendar data": {
+      "main": [
+        [
+          {
+            "node": "Merge employee + calendar data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Hibob: /v1/timeoff/outtoday": {
+      "main": [
+        [
+          {
+            "node": "Split out timeoffs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge employee + calendar data": {
+      "main": [
+        [
+          {
+            "node": "Remove out of date range absences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split out timeoffs": {
+      "main": [
+        [
+          {
+            "node": "Parse timeoff data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse timeoff data": {
+      "main": [
+        [
+          {
+            "node": "Merge employee + API data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge employee + API data": {
+      "main": [
+        [
+          {
+            "node": "Combine results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove out of date range absences": {
+      "main": [
+        [
+          {
+            "node": "Combine results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "GET /019f3161-3e75-4b67-80ee-3c09c1aa7ec9": {
+      "main": [
+        [
+          {
+            "node": "Prepare date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare date": {
+      "main": [
+        [
+          {
+            "node": "Start",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sub-workflow entrypoint": {
+      "main": [
+        [
+          {
+            "node": "Start",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Hibob: /v1/timeoff/outtoday",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hibob: /people/search",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Hibob: Fetch calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine results": {
+      "main": [
+        [
+          {
+            "node": "Has at least one property?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has at least one property?": {
+      "main": [
+        [
+          {
+            "node": "Remove dummy obects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "e8e735c1-4d20-4111-b678-5d72eb18e31b",
+  "triggerCount": 0,
+  "tags": []
+}
