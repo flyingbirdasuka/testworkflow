@@ -1,0 +1,31 @@
+{
+  "createdAt": "2025-06-16T15:28:36.150Z",
+  "updatedAt": "2025-06-16T15:28:39.000Z",
+  "id": "4x6LWkZ2R5z9Q0qU",
+  "name": "tessssst",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8857e4f6-30b4-4067-b781-719f9d6856a7",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "805e45a1-3337-42ae-b147-5b4857ed6397",
+  "triggerCount": 0,
+  "tags": []
+}
