@@ -1,0 +1,125 @@
+{
+  "createdAt": "2025-06-13T12:29:57.827Z",
+  "updatedAt": "2025-06-13T13:13:35.000Z",
+  "id": "LEBjNITEH41QFneR",
+  "name": "Wait for all - sub",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "faaf27cb-5b0d-4da1-a9a8-c51f26aa325f",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        440,
+        0
+      ],
+      "webhookId": "2d62e5c2-ad4a-4e90-a075-7ca5212e015a",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Webhook').item.json.headers.callbackurl }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "finishedItemId",
+              "value": "={{ $('Webhook').item.json.body.requestItemId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5311d60c-f931-4f2c-a430-125c053af1d6",
+      "name": "Call Resume on Parent Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        660,
+        0
+      ],
+      "retryOnFail": true,
+      "typeVersion": 4.2,
+      "waitBetweenTries": 3000,
+      "notes": "The callback resumes the parent workflow and reports which item finished.  There could be a race condition if the parent workflow was just resumed by a different sub-workflow but hasn't entered a webhook-wait again yet.  The delay and retry mitigates for the possibility that multiple subtasks complete and call back at once."
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ \n{\n  \"finishedItemId\": $json.body.requestItemId\n}\n}}",
+        "options": {}
+      },
+      "id": "1ba001b2-c270-465e-9249-fcfc354af361",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        220,
+        0
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "parallel-subworkflow-target",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a57a4214-12d0-4ccf-9eb1-b9791ed5b951",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "14776b45-77d7-4220-808f-2d0a38bec4de",
+      "typeVersion": 2
+    }
+  ],
+  "connections": {
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Call Resume on Parent Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "7e127590-4094-4d07-b43c-4c6022e39494",
+  "triggerCount": 1,
+  "tags": []
+}
