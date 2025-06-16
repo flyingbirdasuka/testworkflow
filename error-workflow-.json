@@ -1,0 +1,67 @@
+{
+  "createdAt": "2025-05-15T08:47:44.882Z",
+  "updatedAt": "2025-05-15T09:50:50.000Z",
+  "id": "QfjFGacIYRtGcB2k",
+  "name": "Error workflow",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        -40
+      ],
+      "id": "99a4ea7e-dcbc-4bf0-af6b-f7fc84288705",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=The workflow {{ $json.workflow.name }}T failed, with the error message: {{ $json.execution.error.message }}. Last node executed: {{ $json.execution.lastNodeExecuted }}. Check this workflow execution here: {{ $json.execution.url }} My Unique ID: ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        40,
+        -40
+      ],
+      "id": "20b53490-5792-466a-bf5d-4f3c5804218b",
+      "name": "Discord",
+      "webhookId": "ad72f4c2-33da-425b-9b54-b603d5c712ae",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "401scUNaOsUza0iQ",
+          "name": "Discord Webhook account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "f4f12bb1-054a-4bb9-9c5d-fa2abc76e196",
+  "triggerCount": 0,
+  "tags": []
+}
