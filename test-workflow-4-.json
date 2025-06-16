@@ -1,0 +1,19 @@
+{
+  "createdAt": "2025-05-15T09:30:47.214Z",
+  "updatedAt": "2025-05-15T09:30:47.214Z",
+  "id": "OEHLv0AbiYnR3SFt",
+  "name": "Test workflow 4",
+  "active": false,
+  "isArchived": false,
+  "nodes": [],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "b69cb82d-c61e-48ac-bec8-152550406ea1",
+  "triggerCount": 0,
+  "tags": []
+}
